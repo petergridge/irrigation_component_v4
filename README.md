@@ -1,7 +1,9 @@
 # Irrigation Component V4
-The driver for this project is to provide an easy to configure user interface for the gardener of the house. The goal is that once the inital configuration is done all the features can be modified through lovelace cards. 
+This release sees the delivery of a **custom card** to render the program options specified in the configuration.
 
-The provided working test harness is self contained with dummy switches and rain sensor that can be used to become familiar with the capabilities of the component and a sample of LoveLace configuration that uses the Entities card with conditions and the Conditions Card to simplify the UI.
+The driver for this project is to provide an easy to configure user interface for the gardener of the house. The goal is that once the inital configuration is done all the features can be modified lovelace cards.
+
+The provided working test harness is self contained with dummy switches and rain sensor that can be used to become familiar with the capabilities of the component.
 
 ![irrigation|690x469,50%](irrigation1.JPG) 
 **Image 1:** All attributes rendered using the companion custom card
@@ -22,7 +24,7 @@ Only one program can run at a time by default to prevent multiple solenoids bein
 * Copy the irrigationprogram folder to the ‘config/custom components/’ directory 
 * Copy the 'irrigation.yaml' file to the packages directory or into configuration.yaml. Sample configuration
 * Restart Home Assistant
-* Install irrigation_custom_card from this repository TBA
+* Install irrigation_custom_card from this repository **TBA**
 
 ### Important
 * Make sure that all of the objects you reference i.e. input_boolean, switch etc are defined or you will get errors when the irrigationprogram is triggered. Check the log for errors.
@@ -60,7 +62,7 @@ If this binary sensor is defined it will not execute a schedule if the controlle
 ### Watering Adjuster feature
 As an alternative to the rain sensor you can also use the watering adjustment. With this feature the integrator is responsible to provide the value using a input_number component. I imagine that this would be based on weather data or a moisture sensor.
 
-See the https://github.com/petergridge/openweathremaphistory for a companion sensor that may be useful.
+See the https://github.com/petergridge/openweathremaphistory for a companion custom comsensor that may be useful.
 
 Setting *water_adjustment* attribute allows a factor to be applied to the watering time.
 
