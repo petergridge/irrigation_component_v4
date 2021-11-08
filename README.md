@@ -1,5 +1,5 @@
 # Irrigation Component V4
-This release sees the delivery of a **custom card** to render the program options specified in the configuration.
+This release sees the delivery of a **custom card https://github.com/petergridge/irrigation_card** to render the program options specified in the configuration.
 
 The driver for this project is to provide an easy to configure user interface for the gardener of the house. The goal is that once the inital configuration is done all the features can be modified lovelace cards.
 
@@ -24,7 +24,7 @@ Only one program can run at a time by default to prevent multiple solenoids bein
 * Copy the irrigationprogram folder to the ‘config/custom components/’ directory 
 * Copy the 'irrigation.yaml' file to the packages directory or into configuration.yaml. Sample configuration
 * Restart Home Assistant
-* Install irrigation_custom_card from this repository **TBA**
+* Install irrigation_custom_card from this repository **https://github.com/petergridge/irrigation_card**
 
 ### Important
 * Make sure that all of the objects you reference i.e. input_boolean, switch etc are defined or you will get errors when the irrigationprogram is triggered. Check the log for errors.
@@ -62,7 +62,7 @@ If this binary sensor is defined it will not execute a schedule if the controlle
 ### Watering Adjuster feature
 As an alternative to the rain sensor you can also use the watering adjustment. With this feature the integrator is responsible to provide the value using a input_number component. I imagine that this would be based on weather data or a moisture sensor.
 
-See the https://github.com/petergridge/openweathremaphistory for a companion custom comsensor that may be useful.
+See the **https://github.com/petergridge/openweathremaphistory** for a companion custom comsensor that may be useful.
 
 Setting *water_adjustment* attribute allows a factor to be applied to the watering time.
 
