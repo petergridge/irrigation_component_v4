@@ -4,7 +4,7 @@ The driver for this project is to provide an easy to configure user interface fo
 The provided working test harness is self contained with dummy switches and rain sensor that can be used to become familiar with the capabilities of the component and a sample of LoveLace configuration that uses the Entities card with conditions and the Conditions Card to simplify the UI.
 
 ![irrigation|690x469,50%](irrigation1.JPG) 
-Image 1: All attributes rendered using the companion custom card
+**Image 1:** All attributes rendered using the companion custom card
 
 All the inputs of the platform are Home Assistant entities for example the start time is provided via a input_datetime entity. The information is evaluated to trigger the irrigation action according to the inputs provided.
 
@@ -182,6 +182,8 @@ The ECO feature allows multiple short watering cycles to be configure for a zone
 *(input_datetime)(Required)* the local time for the program to start.
 >#### run_freq 
 *(input_select)(optional)* A numeric value that represent the frequency to water, 1 is daily, 2 is every second day and so on. If not provided will run every day.
+>#### run_freq 
+*(binary_sensor)(optional)* Detect if the irrigation controller is online. Autoated schedule will not execute if offline.
 >#### irrigation_on
 *(input_boolean)(Optional)* Attribute to temporarily disable the watering schedule
 >#### icon
