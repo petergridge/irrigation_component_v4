@@ -8,15 +8,13 @@ The provided working test harness is self contained with dummy switches and rain
 
 All the inputs of the platform are Home Assistant entities for example the start time is provided via a input_datetime entity. The information is evaluated to trigger the irrigation action according to the inputs provided.
 
-Watering can occur in an Eco mode where a water/wait/repeat cycle is run to minimise run off by letting water soak in by using several short watering cycles. The wait and repeat configuration is optional.
+Watering can occur in an Eco mode where a water/wait/repeat cycle is run to minimise run off by letting water soak in using several short watering cycles. The wait and repeat configuration is optional.
 
 The rain sensor is implemented as a binary_sensor, this allows practically any combination of sensors to suspend the irrigation. This can be defined at the zone level to allow for covered ares to continue watering while exposed areas are suspended.
 
-Implemented as a switch you can start a program manually or using an automation.
+Implemented as a switch, you can start a program manually or using an automation. Manually starting a program by turning the switch on will not evaluate the rain sensorany rules it will just run the shedule, as there is an assumption that there is an intent to run the program.
 
-Only one program can run at a time by default to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped. This can be modified with the allow_multiple attribute.
-
-Manually starting a program by turning the switch on will not evaluate the rain sensorany rules it will just run the shedule, as there is an assumption that there is an intent to run the program.
+Only one program can run at a time by default to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped. This can be modified with the allow_multiple attribute to achieve the required outcome you need to set this on each defined program.
 
 ## INSTALLATION
 
