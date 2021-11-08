@@ -1,0 +1,200 @@
+    input_datetime:
+      irrigation_morning_start_time:
+        name: Morning Start Time
+        has_date: false
+        has_time: true
+      irrigation_afternoon_start_time:
+        name: Afternoon Start Time
+        has_date: false
+        has_time: true
+      irrigation_night_start_time:
+        name: Night Start Time
+        has_date: false
+        has_time: true
+
+    sensor:
+      - platform: time_date
+        display_options:
+          - 'time'
+          - 'date'
+      - platform: openweathermaphistory
+        name: 'rainfactor'
+        api_key: !secret openweatherapi
+       
+    switch:
+
+      - platform: irrigationprogram
+        switches: 
+          morning:
+            irrigation_on: input_boolean.irrigation_on
+            start_time: input_datetime.irrigation_morning_start_time
+            #will run only on selected run days
+            run_freq: input_select.irrigation_run_days
+            icon: mdi:fountain
+            zones:
+              - zone: switch.dummy_1
+              # no rain sensor will alway run
+                name: Pot Plants
+                water: input_number.irrigation_pot_plants_run
+                wait: input_number.irrigation_pot_plants_wait
+                repeat: input_number.irrigation_pot_plants_repeat
+                icon: mdi:flower
+              - zone: switch.dummy_2
+              # rain sensor with ignore option
+                rain_sensor: binary_sensor.raining
+                ignore_rain_sensor: input_boolean.irrigation_ignore_rain_sensor
+                name: Lawn
+                water: input_number.irrigation_lawn_run
+                icon: mdi:grass
+              - zone: switch.dummy_3
+              # rain sensor with ignore option
+                name: Vege Patch
+                rain_sensor: binary_sensor.raining
+                ignore_rain_sensor: input_boolean.irrigation_ignore_rain_sensor
+                water: input_number.irrigation_vege_run
+                icon: mdi:carrot
+          afternoon:
+            #minimal configuration will run every day at the nominated start time
+            start_time: input_datetime.irrigation_afternoon_start_time
+            zones:
+              - zone: switch.dummy_2
+              # no rain sensor will always run
+                name: Lawn
+                water: input_number.irrigation_lawn_run
+                #adust run time by the factor supplied
+                water_adjustment: input_number.irrigation_adjust_run
+                icon: mdi:grass
+          night:
+            start_time: input_datetime.irrigation_night_start_time
+            #will run on the daily interval selected
+            run_freq: input_select.irrigation_freq
+            zones:
+              - zone: switch.dummy_3
+              # no rain sensor configured
+                name: Vege Patch
+                water: input_number.irrigation_vege_run
+                icon: mdi:carrot
+
+      - platform: template
+        switches:
+          dummy_1:
+            value_template: "{{ is_state('input_boolean.dummy_switch_1', 'on') }}"
+            turn_on:
+              - service: input_boolean.turn_on
+                entity_id: input_boolean.dummy_switch_1
+            turn_off:
+              - service: input_boolean.turn_off
+                entity_id: input_boolean.dummy_switch_1
+          dummy_2:
+            value_template: "{{ is_state('input_boolean.dummy_switch_2', 'on') }}"
+            turn_on:
+              - service: input_boolean.turn_on
+                entity_id: input_boolean.dummy_switch_2
+            turn_off:
+              - service: input_boolean.turn_off
+                entity_id: input_boolean.dummy_switch_2
+          dummy_3:
+            value_template: "{{ is_state('input_boolean.dummy_switch_3', 'on') }}"
+            turn_on:
+              - service: input_boolean.turn_on
+                entity_id: input_boolean.dummy_switch_3
+            turn_off:
+              - service: input_boolean.turn_off
+                entity_id: input_boolean.dummy_switch_3
+
+    input_number:
+
+      irrigation_adjust_run:
+        name: water adjustment
+        min: 0
+        max: 1
+        step: 0.2
+        icon: mdi:water-pump-off
+
+      irrigation_pot_plants_run:
+        name: water
+        min: 1
+        max: 30
+        step: 1
+        icon: mdi:water
+      irrigation_pot_plants_wait:
+        name: wait
+        min: 0
+        max: 10
+        step: 1
+        icon: mdi:timer-sand
+      irrigation_pot_plants_repeat:
+        name: repeat
+        min: 1
+        max: 10
+        step: 1
+        icon: mdi:repeat
+
+      irrigation_lawn_run:
+        name: water
+        min: 1
+        max: 30
+        step: 1
+        icon: mdi:water
+
+      irrigation_vege_run:
+        name: water
+        min: 1
+        max: 30
+        step: 1
+        icon: mdi:water
+
+    input_select:
+    # Use either run days of Frequency they are mutually exclusive
+
+      irrigation_run_days:
+        name: Run Days
+        options:
+          - "['Wed','Sat']"
+          - "['Sun','Thu']"
+          - "['Mon','Fri']"
+          - "['Tue','Sat']"
+          - "['Sun','Wed']"
+          - "['Mon','Thu']"
+          - "['Tue','Fri']"
+          - "['Mon','Wed','Fri']"
+          - "['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"
+
+      irrigation_freq:
+        name: Frequency
+        options:
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+          - "6"
+          - "7"
+
+    input_boolean:
+      irrigation_on:
+        name: Enable Irrigation
+
+      irrigation_config:
+        name: Show Configuration
+
+      irrigation_ignore_rain_sensor:
+        name: Ignore Rain Sensor
+      
+      dummy_switch_1:
+      dummy_switch_2:
+      dummy_switch_3:
+      dummy_rain_sensor:
+
+    binary_sensor:
+      - platform: template
+        sensors:
+          raining:
+            device_class: moisture
+            value_template: "{{ is_state('input_boolean.dummy_rain_sensor', 'on') }}"
+            icon_template: >-
+              {% if is_state("binary_sensor.raining", "on") %}
+                mdi:weather-pouring
+              {% else %}
+                mdi:weather-sunny
+              {% endif %}
