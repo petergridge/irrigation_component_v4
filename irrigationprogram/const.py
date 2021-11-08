@@ -25,6 +25,7 @@ ATTR_PROGRAMS           = 'programs'
 ATTR_LAST_RAN           = 'last_ran'
 ATTR_SWITCHES           = 'switches'
 ATTR_MONITOR_CONTROLLER = 'controller_monitor'
+ATTR_MULTIPLE           = 'allow_multiple'
 
 CONST_ENTITY            = 'entity_id'
 CONST_SWITCH            = 'switch'

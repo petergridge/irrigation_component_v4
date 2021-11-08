@@ -43,6 +43,7 @@ from .const import (
     DFLT_ICON,
     ATTR_LAST_RAN,
     ATTR_MONITOR_CONTROLLER,
+    ATTR_MULTIPLE,
 )
 
 from homeassistant.const import (
@@ -66,6 +67,7 @@ SWITCH_SCHEMA = vol.All(
         vol.Optional(ATTR_IRRIGATION_ON): cv.entity_domain('input_boolean'),
         vol.Optional(ATTR_MONITOR_CONTROLLER): cv.entity_domain('binary_sensor'),
         vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
+        vol.Optional(ATTR_MULTIPLE,default=False): cv.boolean,
         vol.Required(ATTR_ZONES): [{
             vol.Exclusive(ATTR_ZONE, 'zone'): cv.entity_domain(CONST_SWITCH),
             vol.Required(CONF_NAME): cv.string,
@@ -99,6 +101,7 @@ async def _async_create_entities(hass, config):
         start_time              = device_config.get(ATTR_START)
         run_freq                = device_config.get(ATTR_RUN_FREQ)
         irrigation_on           = device_config.get(ATTR_IRRIGATION_ON)
+        multiple                = device_config.get(ATTR_MULTIPLE)
         icon                    = device_config.get(ATTR_ICON)
         zones                   = device_config.get(ATTR_ZONES)
         unique_id               = device_config.get(CONF_UNIQUE_ID)
@@ -113,6 +116,7 @@ async def _async_create_entities(hass, config):
                 run_freq,
                 irrigation_on,
                 monitor_controller,
+                multiple,
                 icon,
                 DFLT_ICON_WAIT,
                 DFLT_ICON_RAIN,
@@ -140,6 +144,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         run_freq,
         irrigation_on,
         monitor_controller,
+        multiple,
         icon,
         wait_icon,
         rain_icon,
@@ -171,7 +176,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         self._last_run           = None
         self._triggered_manually = True
         self._template           = None
-
+        self._allow_multiple_zones = multiple
         ''' Validate and Build a template from the attributes provided '''
 
         _LOGGER.debug('Start Time %s: %s',self._start_time, hass.states.get(self._start_time))
@@ -238,7 +243,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 ''' default to 10 days ago for new programs '''
                 z_last_ran = dt_util.now() - timedelta(days=10)
             self._ATTRS [a] = z_last_ran
-            
+
             ''' Build Zone Attributes to support the custom card '''
             a = ('zone%s_%s' % (zn, CONF_NAME))
             self._ATTRS [a] = zone.get(CONF_NAME)
@@ -262,7 +267,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             if zone.get(ATTR_IGNORE_RAIN_SENSOR) is not None:
                 a = ('zone%s_%s' % (zn, ATTR_IGNORE_RAIN_SENSOR))
                 self._ATTRS [a] = zone.get(ATTR_IGNORE_RAIN_SENSOR)
-        
+
         self._ATTRS ['zone_count'] = zn
         setattr(self, '_state_attributes', self._ATTRS)
 
@@ -543,18 +548,20 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                         await asyncio.sleep(1)
                         continue #try next zone#
             ''' end if not run manually '''
-            
+
             ''' stop the program if requested '''
             if self._stop == True:
                 break
 
-            ''' stop all programs other this one when a new zone kicks in '''
-            DATA = {'ignore': self._device_id}
-            await self.hass.services.async_call(DOMAIN,
-                                                'stop_programs',
-                                                DATA)
-            await asyncio.sleep(1)
-     
+#            _LOGGER.error('allow multiple:%s',self._allow_multiple_zones)
+            if self._allow_multiple_zones == False:
+                ''' stop all programs other this one when a new zone kicks in '''
+                DATA = {'ignore': self._device_id}
+                await self.hass.services.async_call(DOMAIN,
+                                                    'stop_programs',
+                                                    DATA)
+                await asyncio.sleep(1)
+
             ''' factor to adjust watering time and gcalculate run time'''
             z_water_adj = 1
             if z_water_adj_v is not None:
@@ -638,7 +645,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                                                             SERVICE_TURN_OFF,
                                                             DATA)
             ''' End of repeat loop '''
-            _LOGGER.error('stop: %s, manual: %s, sonelastrun: %s',self._stop, self._triggered_manually, zonelastran )
+#            _LOGGER.error('stop: %s, manual: %s, sonelastrun: %s',self._stop, self._triggered_manually, zonelastran )
             if not self._stop and not self._triggered_manually:
                 self._ATTRS[zonelastran] = dt_util.now()
                 setattr(self, '_state_attributes', self._ATTRS)
