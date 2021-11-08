@@ -181,8 +181,8 @@ The ECO feature allows multiple short watering cycles to be configure for a zone
 >#### start_time
 *(input_datetime)(Required)* the local time for the program to start.
 >#### run_freq 
-*(input_select)(optional)* A numeric value that represent the frequency to water, 1 is daily, 2 is every second day and so on. If not provided will run every day.
->#### run_freq 
+*(input_select)(optional)* Indicate how often to run. If not provided will run every day.
+>#### controller_monitor 
 *(binary_sensor)(optional)* Detect if the irrigation controller is online. Autoated schedule will not execute if offline.
 >#### irrigation_on
 *(input_boolean)(Optional)* Attribute to temporarily disable the watering schedule
@@ -211,7 +211,7 @@ The ECO feature allows multiple short watering cycles to be configure for a zone
 >>#### repeat
 *(input_number)(Optional)* This is the number of cycles to run water/wait/repeat.
 >>#### run_freq 
-*(input_select)(optional)* A numeric value that represent the frequency to water, 1 is daily, 2 is every second day and so on. If not provided will run every day.
+*(input_select)(optional)* Indicate how often to run. If not provided will run every day.
 >> #### icon
 *(icon)(Optional)* This will replace the default mdi:water icon shown when the zone is running.
 
