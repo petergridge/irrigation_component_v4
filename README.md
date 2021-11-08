@@ -126,6 +126,9 @@ The ECO feature allows multiple short watering cycles to be configure for a zone
 * *repeat* defines the number of watering cycles to run
 
 ## CONFIGURATION
+
+A self contained working sample configuration is provided in the packages directory of this repository.
+
 ### Example configuration.yaml entry
 ```yaml
 
