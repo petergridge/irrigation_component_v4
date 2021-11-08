@@ -21,10 +21,12 @@ Only one program can run at a time by default to prevent multiple solenoids bein
 ## INSTALLATION
 
 ### To create a working sample
-* Copy the irrigationprogram folder to the ‘config/custom components/’ directory 
-* Copy the 'irrigation.yaml' file to the packages directory or into configuration.yaml. Sample configuration
+* Copy the irrigationprogram folder to the ‘config/custom components/’ directory
+* Restart Home Assistant
+* Copy the 'irrigationtest.yaml' file to the packages directory or into configuration.yaml
 * Restart Home Assistant
 * Install irrigation_custom_card from this repository **https://github.com/petergridge/irrigation_card**
+* Follow the custom card instructions to add a card for each of: switch.morning, switch.afternoon and switch.night
 
 ### Important
 * Make sure that all of the objects you reference i.e. input_boolean, switch etc are defined or you will get errors when the irrigationprogram is triggered. Check the log for errors.
