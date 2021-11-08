@@ -3,7 +3,7 @@ The driver for this project is to provide an easy to configure user interface fo
 
 The provided working test harness is self contained with dummy switches and rain sensor that can be used to become familiar with the capabilities of the component and a sample of LoveLace configuration that uses the Entities card with conditions and the Conditions Card to simplify the UI.
 
-![irrigation|690x469,50%](irrigation.JPG) 
+![irrigation|690x469,50%](irrigation1.JPG) 
 Image 1: All attributes rendered using the companion custom card
 
 All the inputs of the platform are Home Assistant entities for example the start time is provided via a input_datetime entity. The information is evaluated to trigger the irrigation action according to the inputs provided.
