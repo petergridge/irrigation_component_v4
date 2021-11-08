@@ -1,16 +1,10 @@
-# Irrigation Component V3
+# Irrigation Component V4
 The driver for this project is to provide an easy to configure user interface for the gardener of the house. The goal is that once the inital configuration is done all the features can be modified through lovelace cards. 
 
 The provided working test harness is self contained with dummy switches and rain sensor that can be used to become familiar with the capabilities of the component and a sample of LoveLace configuration that uses the Entities card with conditions and the Conditions Card to simplify the UI.
 
 ![irrigation|690x469,50%](irrigation.JPG) 
-Image 1: Show configuration enabled, displaying all attibutes availble for configuration
-
-![irrigation2|690x469,50%](irrigation2.JPG)
-Image 2: Show configuration disabled, displaying only minimal sensor information
-
-![irrigation2|690x469,50%](irrigation3.JPG)
-Image 3: While a program is running showing the remaining run time for the Pot Plants zone
+Image 1: All attributes rendered using the companion custom card
 
 All the inputs of the platform are Home Assistant entities for example the start time is provided via a input_datetime entity. The information is evaluated to trigger the irrigation action according to the inputs provided.
 
@@ -22,7 +16,7 @@ Implemented as a switch you can start a program manually or using an automation.
 
 Only one program can run at a time to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped.
 
-Manually starting a program by turning the switch on will not evaluate the rain sensor, as there is an assumption that there is an intent to run the program.
+Manually starting a program by turning the switch on will not evaluate the rain sensorany rules it will just run the shedule, as there is an assumption that there is an intent to run the program.
 
 ## INSTALLATION
 
@@ -30,7 +24,7 @@ Manually starting a program by turning the switch on will not evaluate the rain 
 * Copy the irrigationprogram folder to the ‘config/custom components/’ directory 
 * Copy the 'irrigation.yaml' file to the packages directory or into configuration.yaml. Sample configuration
 * Restart Home Assistant
-* For each of the 'card.yaml' files found in the lovelace directory, add a manual card and copy the yaml into card
+* Install irrigation_custom_card from this repository TBA
 
 ### Important
 * Make sure that all of the objects you reference i.e. input_boolean, switch etc are defined or you will get errors when the irrigationprogram is triggered. Check the log for errors.
@@ -44,7 +38,6 @@ sensor:
       - 'time'
       - 'date'
 ```
-
 ### Debug
 Add the following to your logger section configuration.yaml
 ```yaml
@@ -53,7 +46,6 @@ logger:
     logs:
         custom_components.irrigationprogram: debug
 ```
-
 ### Rain Sensor feature
 If a rain sensor is not defined the zone will always run at the nominated start time.
 
@@ -64,8 +56,13 @@ The rain sensor can be optionally defined in each zone. You can:
 * Have a different sensor for different areas
 * Configure the ability to ignore the rain sensor
 
+### Monitor Controller feature
+If this binary sensor is defined it will not execute a schedule if the controller is offline. This is ideal for ESP Home implementations.
+
 ### Watering Adjuster feature
 As an alternative to the rain sensor you can also use the watering adjustment. With this feature the integrator is responsible to provide the value using a input_number component. I imagine that this would be based on weather data or a moisture sensor.
+
+See the https://github.com/petergridge/openweathremaphistory for a companion sensor that may be useful.
 
 Setting *water_adjustment* attribute allows a factor to be applied to the watering time.
 
@@ -89,22 +86,47 @@ automation:
 ```
 
 ### Run Days and Run Frequency
-Run Days and Run frequency allows the definition of when the program to be controlled. Only one value can be provided in the program configuration.
+Run frequency allows the definition of when the program will run.
 
-* *Run Days* supports water restrictions impose in Australia alowing watering to occur on specific days only
-* *Run Frequncy* allows the water to occur at a specified frequency, for example, every 3 days.
+This can be a specific set of days or the number of days between watering events. This can be defined at the Program or zone level. Application at the zone level allows different zones to execute at the same time but using varying frquencies. for example: Vege Patch every two days and the Lawn once a week.
 
+* *Run Freq* allows the water to occur at a specified frequency, for example, every 3 days or only on Monday, Wednesday and Saturday. 
+* *Run Days DEPRECATED*  in this version, if you used this in version 3 simply rename *Run Days* to *Run Freq* to retain the same behaviour.
+
+Defining a selection list to use with the run_freq attribute.
+```yaml
+input_select:
+  irrigation_freq:
+    name: Zone1 Frequency
+    options:
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+      - "6"
+      - "7"
+      - "['Wed','Sat']"
+      - "['Sun','Thu']"
+      - "['Mon','Fri']"
+      - "['Tue','Sat']"
+      - "['Sun','Wed']"
+      - "['Mon','Thu']"
+      - "['Tue','Fri']"
+      - "['Mon','Wed','Fri']"
+      - "['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"
+```
 
 ### ECO feature
-The ECO feature allows multiple small watering cycles to be configure for a zone in the program to minimise run off and wastage. Setting the optional configuration of the Wait, Repeat attributes of a zone will enable the feature. 
+The ECO feature allows multiple short watering cycles to be configure for a zone in the program to minimise run off and wastage. Setting the optional configuration of the Wait, Repeat attributes of a zone will enable the feature. 
 
 * *wait* sets the length of time to wait between watering cycles
 * *repeat* defines the number of watering cycles to run
 
 ## CONFIGURATION
-
 ### Example configuration.yaml entry
 ```yaml
+
   switch:
   - platform: irrigationprogram
     switches: 
@@ -123,14 +145,14 @@ The ECO feature allows multiple small watering cycles to be configure for a zone
             water_adjustment: input_number.adjust_run_time
             wait: input_number.irrigation_pot_plants_wait
             repeat: input_number.irrigation_pot_plants_repeat
-            icon_off: 'mdi:flower'
+            icon: 'mdi:flower'
         # No rain sensor defined, will always water to the schedule
           - zone: switch.irrigation_solenoid_03
             name: Greenhouse
             water: input_number.irrigation_greenhouse_run
             wait: input_number.irrigation_greenhouse_wait
             repeat: input_number.irrigation_greenhouse_repeat
-            icon_off: 'mdi:flower'
+            icon: 'mdi:flower'
         # Rain sensor used, watering time only
           - zone: switch.irrigation_solenoid_02
             name: Front Lawn
@@ -158,10 +180,8 @@ The ECO feature allows multiple small watering cycles to be configure for a zone
 *(string)(Optional)* display name for the irrigation program switch.
 >#### start_time
 *(input_datetime)(Required)* the local time for the program to start.
->#### run_freq (mutually exclusive with run_days)
+>#### run_freq 
 *(input_select)(optional)* A numeric value that represent the frequency to water, 1 is daily, 2 is every second day and so on. If not provided will run every day.
->#### run_days (mutually exclusive run_freq)
-*(input_select)(Optional) * The selected option should provide a list days to run, 'Sun','Thu' will run on Sunday and Thursday. If not provided will run every day.
 >#### irrigation_on
 *(input_boolean)(Optional)* Attribute to temporarily disable the watering schedule
 >#### icon
@@ -186,9 +206,10 @@ The ECO feature allows multiple small watering cycles to be configure for a zone
 *(input_number)(Optional)* This provides for an Eco capability implementing a cycle of water/wait/repeat to allow water to soak into the soil.
 >>#### repeat
 *(input_number)(Optional)* This is the number of cycles to run water/wait/repeat.
->>#### icon_on
+>>#### run_freq 
+*(input_select)(optional)* A numeric value that represent the frequency to water, 1 is daily, 2 is every second day and so on. If not provided will run every day.
+>> #### icon
 *(icon)(Optional)* This will replace the default mdi:water icon shown when the zone is running.
-
 
 ## SERVICES
 ```yaml
@@ -197,6 +218,11 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0 
+* New repository for version 4 with improvements and support for custom card delivery
+* Allow definition for run frequency at the zone level
+* DEPRICATE the run days attribute. Simply rename this attribute to run_freq to maintain the change
+* Expose attributes to support the new custom card
 
 ### 3.0.3
 * Update to validate the referenced objects after HASS has started.
