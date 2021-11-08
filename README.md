@@ -8,13 +8,13 @@ The provided working test harness is self contained with dummy switches and rain
 
 All the inputs of the platform are Home Assistant entities for example the start time is provided via a input_datetime entity. The information is evaluated to trigger the irrigation action according to the inputs provided.
 
-Watering can occur in an Eco mode where a water/wait/repeat cycle is run to minimise run off by letting water soak as a by using several short watering cycles. The wait and repeat configuration is optional if you only want to water for a single lengthy period of time.
+Watering can occur in an Eco mode where a water/wait/repeat cycle is run to minimise run off by letting water soak in by using several short watering cycles. The wait and repeat configuration is optional.
 
-The rain sensor is implemented as a binary_sensor, this allows practically any combination of sensors to suspend the irrigation. 
+The rain sensor is implemented as a binary_sensor, this allows practically any combination of sensors to suspend the irrigation. This can be defined at the zone level to allow for covered ares to continue watering while exposed areas are suspended.
 
 Implemented as a switch you can start a program manually or using an automation.
 
-Only one program can run at a time to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped.
+Only one program can run at a time by default to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped. This can be modified with the allow_multiple attribute.
 
 Manually starting a program by turning the switch on will not evaluate the rain sensorany rules it will just run the shedule, as there is an assumption that there is an intent to run the program.
 
@@ -188,6 +188,8 @@ The ECO feature allows multiple short watering cycles to be configure for a zone
 *(input_boolean)(Optional)* Attribute to temporarily disable the watering schedule
 >#### icon
 *(icon)(Optional)* The icon displayed for the program. (default: mdi:fountain)
+>#### allow_multiple
+*(boolean)(Optional)* Allow multiple zones to be active at the same time (default: false)
 >#### unique_id
 *(string)(Optional)* An ID that uniquely identifies this switch. Set this to an unique value to allow customisation trough the UI.
 >#### Zones 
@@ -221,10 +223,10 @@ irrigationprogram.stop_programs:
 
 ## REVISION HISTORY
 ### 4.0 
-* New repository for version 4 with improvements and support for custom card delivery
-* Allow definition for run frequency at the zone level
-* DEPRICATE the run days attribute. Simply rename this attribute to run_freq to maintain the change
-* Expose attributes to support the new custom card
+* New repository for Version 4 with improvements and support for custom card support
+* Allow definition for run frequency at the zone level - feature request
+* DEPRICATE the run_days attribute. Simply rename this attribute to run_freq to maintain the functionality
+* Optionally allow multiple programs to run simultaneously. allow_multiple config option.
 
 ### 3.0.3
 * Update to validate the referenced objects after HASS has started.
