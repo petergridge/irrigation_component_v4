@@ -226,7 +226,8 @@ irrigationprogram.stop_programs:
 * New repository for Version 4 with improvements and support for custom card support
 * Allow definition for run frequency at the zone level - feature request
 * DEPRICATE the run_days attribute. Simply rename this attribute to run_freq to maintain the functionality
-* Optionally allow multiple programs to run simultaneously. allow_multiple config option.
+* Optionally allow multiple programs to run simultaneously. allow_multiple config option
+* Allow monitoring of the irrigation controller hardware if supported, will not run schedule if controller is offline
 
 ### 3.0.3
 * Update to validate the referenced objects after HASS has started.
