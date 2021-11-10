@@ -227,6 +227,9 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.1
+* Correct time remaining calculation
+
 ### 4.0.0
 * New repository for Version 4 with improvements and support for custom card support
 * Allow definition for run frequency at the zone level - feature request
