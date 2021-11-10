@@ -362,7 +362,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
     async def async_turn_on(self, **kwargs):
 
         def format_run_time(runtime):
-            minsec = divmod(runtime,360)
+            minsec = divmod(runtime,3600)
             hour = minsec[0]
             minsec = divmod(runtime,60)
             return ('%d:%02d:%02d' % (hour, minsec[0], minsec[1]))
