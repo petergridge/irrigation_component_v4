@@ -73,9 +73,9 @@ SWITCH_SCHEMA = vol.All(
             vol.Required(CONF_NAME): cv.string,
             vol.Optional(ATTR_RUN_FREQ): cv.entity_domain('input_select'),
             vol.Optional(ATTR_RAIN_SENSOR): cv.entity_domain('binary_sensor'),
-            vol.Optional(ATTR_IGNORE_RAIN_SENSOR): cv.entity_domain('input_boolean'),
+            vol.Optional(ATTR_IGNORE_RAIN_SENSOR): vol.All(vol.Any(cv.entity_domain('input_boolean'),cv.boolean)),
             vol.Required(ATTR_WATER): cv.entity_domain('input_number'),
-            vol.Optional(ATTR_WATER_ADJUST): cv.entity_domain('input_number'),
+            vol.Optional(ATTR_WATER_ADJUST): cv.entity_domain(['input_number','sensor']),
             vol.Optional(ATTR_WAIT): cv.entity_domain('input_number'),
             vol.Optional(ATTR_REPEAT): cv.entity_domain('input_number'),
             vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
@@ -367,6 +367,100 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             minsec = divmod(runtime,60)
             return ('%d:%02d:%02d' % (hour, minsec[0], minsec[1]))
 
+        def calculate_run_time(p_water_adj,p_water, p_wait, p_repeat):
+            class run_time:
+              def __init__(self, run_time, water_adj, water, wait, repeat):
+                self.run_time = run_time
+                self.water_adj = water_adj
+                self.water = water
+                self.wait = wait
+                self.repeat = repeat
+
+            ''' factor to adjust watering time and calculate run time'''
+            z_water_adj = 1
+            try:
+                if p_water_adj is not None:
+                    z_water_adj = float(self.hass.states.get(p_water_adj).state)
+                    _LOGGER.debug('watering adjustment factor is %s', z_water_adj)
+            except:
+                _LOGGER.error('watering adjustment factor is not numeric %s', p_water_adj)
+
+            z_water = math.ceil(int(float(self.hass.states.get(p_water).state)) * float(z_water_adj))
+            if z_water == 0:
+                _LOGGER.debug('watering time has been adjusted to 0 will not run zone %s',p_water)
+
+            z_wait = 0
+            try:
+                if p_wait is not None:
+                    z_wait = int(float(self.hass.states.get(p_wait).state))
+                    _LOGGER.debug('watering adjustment factor is %s', z_water_adj)
+            except:
+                _LOGGER.error('wait is not numeric %s', p_wait)
+                
+            z_repeat = 1
+            try:
+                if p_repeat is not None :
+                    z_repeat = int(float(self.hass.states.get(p_repeat).state))
+                    if z_repeat == 0:
+                        z_repeat = 1
+            except:
+                _LOGGER.error('repeat is not numeric %s', p_repeat)
+
+            z_run_time = (((z_water + z_wait) * z_repeat) - z_wait) * 60
+
+            return run_time(z_run_time, z_water_adj, z_water, z_wait, z_repeat)
+        ''' end calculate_run_time '''
+
+        def should_run(p_run_freq):
+            a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
+            z_last_ran = state.attributes.get(a)
+            Numeric_Freq = None
+            String_Freq = None
+            response = True
+            if p_run_freq is not None:
+                try:
+                    Numeric_Freq = int(self.hass.states.get(p_run_freq).state)
+                except:
+                    String_Freq = self.hass.states.get(p_run_freq).state
+                ''' check if this day matches frequency '''
+                if Numeric_Freq is not None:
+                    if Numeric_Freq <= (dt_util.as_timestamp(dt_util.now()) - dt_util.as_timestamp(z_last_ran)) / 86400:
+                        response = True
+                    else:
+                        response =  False
+                if String_Freq is not None:
+                    if dt_util.now().strftime('%a') not in String_Freq:
+                        response =  False #try next zone#
+                    else:
+                        response =  True
+            return response
+        ''' end should_run '''
+
+        def is_raining(p_rain_sensor, p_ignore_rain_sensor):
+            ''' assess the rain sensor '''
+            raining = True
+            ignore_bool = False
+
+            if p_rain_sensor is not None:
+                if  self.hass.states.get(p_rain_sensor) == None:
+                    _LOGGER.warning('rain sensor: %s not found, check your configuration',p_rain_sensor)
+                else:
+                    raining = self.hass.states.is_state(p_rain_sensor,'on')
+            else:
+                raining = False
+            ''' assess the ignore rain sensor '''
+            if  p_ignore_rain_sensor is not None:
+                if  self.hass.states.get(p_ignore_rain_sensor) == None:
+                    _LOGGER.warning('Ignore rain sensor: %s not found, check your configuration',p_ignore_rain_sensor)
+                else:
+                     ignore_bool = self.hass.states.is_state(p_ignore_rain_sensor,'on')
+            ''' process rain sensor '''
+            if ignore_bool == True: #ignore the rain sensor
+                raining = False
+
+            return raining
+        ''' end is_raining '''
+
         ''' Initialise for stop programs service call '''
         p_icon        = self._icon
         p_name        = self._name
@@ -393,6 +487,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         zn = 0
         for zone in self._zones:
             z_rain_sen_v  = zone.get(ATTR_RAIN_SENSOR)
+            z_ignore_v    = zone.get(ATTR_IGNORE_RAIN_SENSOR)
             z_water_v     = zone.get(ATTR_WATER)
             z_water_adj_v = zone.get(ATTR_WATER_ADJUST)
             z_wait_v      = zone.get(ATTR_WAIT)
@@ -401,55 +496,21 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             z_run_freq    = zone.get(ATTR_RUN_FREQ)
 
             zn += 1
-            a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
-            z_last_ran = state.attributes.get(a)
 
             ''' check if the zone should run '''
             if not self._triggered_manually:
-                Numeric_Freq = None
-                String_Freq = None
-
                 if z_run_freq is not None:
-                    try:
-                        Numeric_Freq = int(self.hass.states.get(z_run_freq).state)
-                    except:
-                        String_Freq = self.hass.states.get(z_run_freq).state
-                    ''' check if this day matches frequency '''
-                    if Numeric_Freq is not None and Numeric_Freq <= (dt_util.as_timestamp(dt_util.now()) - dt_util.as_timestamp(z_last_ran)) / 86400:
-                        pass
-                    if String_Freq is not None and dt_util.now().strftime('%a') not in String_Freq:
-                        continue
+                    freq_obj = z_run_freq
                 else:
                     if self._run_freq is not None:
-                        try:
-                            Numeric_Freq = int(self.hass.states.get(self._run_freq).state)
-                        except:
-                            String_Freq = self.hass.states.get(self._run_freq).state
-                        ''' check if this day matches frequency '''
-                        if Numeric_Freq is not None and Numeric_Freq <= (dt_util.as_timestamp(dt_util.now()) - dt_util.as_timestamp(self._last_run)) / 86400:
-                            pass
-                        if String_Freq is not None and dt_util.now().strftime('%a') not in String_Freq:
-                            continue
-
-            ''' factor to adjust watering time '''
-            z_water_adj = 1
-            if z_water_adj_v is not None:
-                z_water_adj = float(self.hass.states.get(z_water_adj_v).state)
-
-            z_water = math.ceil(int(float(self.hass.states.get(z_water_v).state)) * float(z_water_adj))
-
-            z_wait = 0
-            if z_wait_v is not None:
-                z_wait = int(float(self.hass.states.get(z_wait_v).state))
-
-            z_repeat = 1
-            if z_repeat_v is not None:
-                z_repeat = int(float(self.hass.states.get(z_repeat_v).state))
-                if z_repeat == 0:
-                    z_repeat = 1
-
-            self._total_runtime += (((z_water + z_wait) * z_repeat) - z_wait) * 60
-
+                        freq_obj = self._run_freq
+                if freq_obj is not None:
+                    if should_run(freq_obj) == False:
+                        continue
+                if is_raining(z_rain_sen_v, z_ignore_v):
+                    continue
+                
+            self._total_runtime += calculate_run_time(z_water_adj_v,z_water_v, z_wait_v, z_repeat_v).run_time
         ''' end of for zone loop to calculate total run time '''
 
         ''' Iterate through all the defined zones and run when required'''
@@ -469,6 +530,10 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             z_run_freq    = zone.get(ATTR_RUN_FREQ)
             zn += 1
 
+            ''' stop the program if requested '''
+            if self._stop == True:
+                break
+
             if  z_ignore_v is not None and self.hass.states.async_available(z_ignore_v):
                 _LOGGER.error('%s not found',z_ignore_v)
                 continue #try next zone#
@@ -487,73 +552,35 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 _LOGGER.error('%s not found',z_repeat_v)
 
             ''' check if the zone should run '''
-            zonelastran = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
-            z_last_ran = state.attributes.get(zonelastran)
             if not self._triggered_manually:
-
-                Numeric_Freq = None
-                String_Freq = None
-
                 if z_run_freq is not None:
-                    try:
-                        Numeric_Freq = int(self.hass.states.get(z_run_freq).state)
-                    except:
-                        String_Freq = self.hass.states.get(z_run_freq).state
-                    ''' check if this day matches frequency '''
-                    if Numeric_Freq is not None and Numeric_Freq <= (dt_util.as_timestamp(dt_util.now()) - dt_util.as_timestamp(z_last_ran)) / 86400:
-                        pass
-                    if String_Freq is not None and dt_util.now().strftime('%a') not in String_Freq:
-                        continue #try next zone#
+                    freq_obj = z_run_freq
                 else:
                     if self._run_freq is not None:
-                        try:
-                            Numeric_Freq = int(self.hass.states.get(self._run_freq).state)
-                        except:
-                            String_Freq = self.hass.states.get(self._run_freq).state
-                        ''' check if this day matches frequency '''
-                        if Numeric_Freq is not None and Numeric_Freq <= (dt_util.as_timestamp(dt_util.now()) - dt_util.as_timestamp(self._last_run)) / 86400:
-                            pass
-                        if String_Freq is not None and dt_util.now().strftime('%a') not in String_Freq:
-                            continue #try next zone#
+                        freq_obj = self._run_freq
+ 
+                if should_run(freq_obj) == False:
+                    continue
 
-                ''' assess the rain sensor '''
-                raining = False
-                if z_rain_sen_v is not None:
-                    _LOGGER.debug('rain sensor: %s',self.hass.states.get(z_rain_sen_v))
-                    if  self.hass.states.get(z_rain_sen_v) == None:
-                        _LOGGER.warning('rain sensor: %s not found, check your configuration',z_rain_sen_v)
-                    else:
-                        raining = self.hass.states.is_state(z_rain_sen_v,'on')
-                        _LOGGER.debug('raining:%s',raining)
-                ''' assess the ignore rain sensor '''
-                if  z_ignore_v is not None:
-                    _LOGGER.debug('Ignore rain sensor: %s',self.hass.states.get(z_ignore_v))
-                    if  self.hass.states.get(z_ignore_v) == None:
-                        _LOGGER.warning('Ignore rain sensor: %s not found, check your configuration',z_ignore_v)
-                    else:
-                         z_ignore_bool = self.hass.states.is_state(z_ignore_v,'on')
-                ''' process rain sensor '''
-                if not z_ignore_bool: #ignore rain sensor
-                    _LOGGER.debug('Do not ignore the rain sensor')
-                    if raining:
-                        _LOGGER.debug('raining do not run, continue to next zone')
-                        ''' set the icon to Raining - for a few seconds '''
-                        self._icon = self._rain_icon
-                        self._name = self._program_name + "-" + z_name
-                        self.async_schedule_update_ha_state()
-                        await asyncio.sleep(5)
-                        self._icon = p_icon
-                        self._name = self._program_name
-                        self.async_schedule_update_ha_state()
-                        await asyncio.sleep(1)
-                        continue #try next zone#
+                if is_raining(z_rain_sen_v, z_ignore_v):
+
+                    ''' set the icon to Raining - for a few seconds '''
+                    self._icon = self._rain_icon
+                    self._name = self._program_name + "-" + z_name
+                    self.async_schedule_update_ha_state()
+                    await asyncio.sleep(5)
+                    self._icon = p_icon
+                    self._name = self._program_name
+                    self.async_schedule_update_ha_state()
+                    await asyncio.sleep(1)
+                    continue #try next zone#
+
             ''' end if not run manually '''
 
             ''' stop the program if requested '''
             if self._stop == True:
                 break
 
-#            _LOGGER.error('allow multiple:%s',self._allow_multiple_zones)
             if self._allow_multiple_zones == False:
                 ''' stop all programs other this one when a new zone kicks in '''
                 DATA = {'ignore': self._device_id}
@@ -562,30 +589,12 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                                                     DATA)
                 await asyncio.sleep(1)
 
-            ''' factor to adjust watering time and gcalculate run time'''
-            z_water_adj = 1
-            if z_water_adj_v is not None:
-                z_water_adj = float(self.hass.states.get(z_water_adj_v).state)
-                _LOGGER.debug('watering adjustment factor is %s', z_water_adj)
-
-            z_water = math.ceil(int(float(self.hass.states.get(z_water_v).state)) * float(z_water_adj))
-            if z_water == 0:
-                _LOGGER.debug('watering time has been adjusted to 0 do not run zone %s',z_zone)
-                continue
-
-            z_wait = 0
-            if z_wait_v is not None:
-                z_wait = int(float(self.hass.states.get(z_wait_v).state))
-
-            z_repeat = 1
-            if z_repeat_v is not None:
-                z_repeat = int(float(self.hass.states.get(z_repeat_v).state))
-                if z_repeat == 0:
-                    z_repeat = 1
-
-            self._runtime = (((z_water + z_wait) * z_repeat) - z_wait) * 60
-
-            _LOGGER.debug('Start water:%s, water_adj:%s wait:%s, repeat:%s', z_water, z_water_adj, z_wait, z_repeat)
+            ''' factor to adjust watering time and calculate run time'''
+            runtime = calculate_run_time(z_water_adj_v, z_water_v, z_wait_v, z_repeat_v)
+            self._runtime = runtime.run_time
+            z_water = runtime.water
+            z_wait = runtime.wait
+            z_repeat = runtime.repeat
 
             '''Set time remaining attribute '''
             self._ATTRS [ATTR_REMAINING] = format_run_time(self._total_runtime)
@@ -645,8 +654,8 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                                                             SERVICE_TURN_OFF,
                                                             DATA)
             ''' End of repeat loop '''
-#            _LOGGER.error('stop: %s, manual: %s, sonelastrun: %s',self._stop, self._triggered_manually, zonelastran )
             if not self._stop and not self._triggered_manually:
+                zonelastran = ('zone%s_%s' % (zn, ATTR_LAST_RAN))   
                 self._ATTRS[zonelastran] = dt_util.now()
                 setattr(self, '_state_attributes', self._ATTRS)
                 self.async_schedule_update_ha_state()
