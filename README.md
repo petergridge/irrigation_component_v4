@@ -227,6 +227,9 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.3
+* corrected error on new program definition
+
 ### 4.0.2
 * Enable both input number and sensor for water adjustment
 * Refactor rain sensor handling
