@@ -238,8 +238,9 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             zn += 1
 
             a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
-            z_last_ran = state.attributes.get(a)
-            if state.attributes.get(a) == None:
+            try:
+                z_last_ran = state.attributes.get(a)
+            except:
                 ''' default to 10 days ago for new programs '''
                 z_last_ran = dt_util.now() - timedelta(days=10)
             self._ATTRS [a] = z_last_ran
