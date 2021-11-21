@@ -219,6 +219,8 @@ A self contained working sample configuration is provided in the packages direct
 *(input_select)(optional)* Indicate how often to run. If not provided will run every day.
 >> #### icon
 *(icon)(Optional)* This will replace the default mdi:water icon shown when the zone is running.
+>> #### disable_zone
+*(input_boolean)(Optional)* This will disable a zone, preventing it from running in either manual or program executions.
 
 ## SERVICES
 ```yaml
@@ -227,6 +229,12 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.5
+* Add ability to disable a zone
+* Handling new and changes zones to an existing program
+* Move zone operations to a class
+* provide zone level remaining time for the custom card
+* improve start time handling
 ### 4.0.3
 * corrected error on new program definition
 
