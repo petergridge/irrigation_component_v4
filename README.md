@@ -1,7 +1,7 @@
 # Irrigation Component V4
 This release sees the delivery of a **custom card https://github.com/petergridge/irrigation_card** to render the program options specified in the configuration.
 
-The driver for this project is to provide an easy to configure user interface for the gardener of the house. The goal is that once the inital configuration is done all the features can be modified lovelace cards.
+The driver for this project is to provide an easy to configure user interface for the gardener of the house. The goal is that once the inital configuration is done all the features can be modified using the custom lovelace card.
 
 The provided working test harness is self contained with dummy switches and rain sensor that can be used to become familiar with the capabilities of the component.
 
