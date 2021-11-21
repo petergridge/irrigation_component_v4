@@ -5,6 +5,6 @@
   "documentation": "https://github.com/petergridge/irrigation_component_v4",
   "issue_tracker": "https://github.com/petergridge/irrigation_component_v4/issues",
   "dependencies": [],
-  "codeowners": ["petergridge"],
+  "codeowners": ["@petergridge"],
   "requirements": []
 }
