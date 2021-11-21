@@ -1,0 +1,14 @@
+
+stop_programs:
+    description: Stop any running programs or zones.
+
+run_zone:
+    description: Stop any running programs or zones.
+    fields:
+        entity_id:
+            required: true
+            selector:
+                entity:
+                    domain: switch
+        zone:
+            required: true
