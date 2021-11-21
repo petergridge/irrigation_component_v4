@@ -21,7 +21,7 @@ Only one program can run at a time by default to prevent multiple solenoids bein
 ## INSTALLATION
 
 ### To create a working sample
-* Copy the irrigationprogram folder to the ‘config/custom components/’ directory
+* Copy the custom_components/irrigationprogram folder to the ‘config/custom components/’ directory
 * Restart Home Assistant
 * Copy the 'irrigationtest.yaml' file to the packages directory or into configuration.yaml
 * Restart Home Assistant
