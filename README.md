@@ -1,5 +1,5 @@
 
-# Irrigation Component V4 ![Irrigation Program Logo](icon.png) 
+# Irrigation Component V4 <img src="icon.png" alt="drawing" width="125"/>
 
 
 This release sees the delivery of a **custom card https://github.com/petergridge/irrigation_card** to render the program options specified in the configuration.
