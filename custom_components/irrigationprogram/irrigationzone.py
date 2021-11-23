@@ -92,7 +92,7 @@ class irrigationzone:
             if  self.hass.states.get(self._rain_sensor) == None:
                 _LOGGER.warning('rain sensor: %s not found, check your configuration',self._rain_sensor)
             else:
-                raining = self.hass.states.is_state(self._rain_sensor,'on')
+                self._rain_sensor_value = self.hass.states.is_state(self._rain_sensor,'on')
         else:
             self._rain_sensor_value = False
         return self._rain_sensor_value

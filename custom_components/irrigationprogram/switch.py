@@ -229,7 +229,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
         self._ATTRS = {}
         self._ATTRS [ATTR_LAST_RAN] = self._last_run
-        self._ATTRS [ATTR_REMAINING] = 0
+        self._ATTRS [ATTR_REMAINING] = ('%d:%02d:%02d' % (0, 0, 0))
         self._ATTRS [ATTR_START] = self._start_time
 
         if self._run_freq is not None:
@@ -257,6 +257,8 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 z_last_ran = None
             self._ATTRS [a] = z_last_ran
             self._irrigationzones[zn-1].set_last_ran(z_last_ran)
+            zoneremaining = ('zone%s_remaining' % (zn))   
+            self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
 
             ''' Build Zone Attributes to support the custom card '''
             a = ('zone%s_%s' % (zn, CONF_NAME))
@@ -416,6 +418,8 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
             ''' check if the zone should run '''
             if self._irrigationzones[zn-1].disable_zone_value() == True:
+                zoneremaining = ('zone%s_remaining' % (zn)) 
+                self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
                 continue
             if not self._triggered_manually:
                 if self._irrigationzones[zn-1].is_raining(): 
@@ -445,6 +449,8 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             z_last_ran = state.attributes.get(a)
             ''' check if the zone should run '''
             if self._irrigationzones[zn-1].disable_zone_value() == True:
+                zoneremaining = ('zone%s_remaining' % (zn)) 
+                self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
                 continue
             if self._irrigationzones[zn-1].run_time() == 0:
                 continue
@@ -496,6 +502,9 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             ''' reset the last ran time to 23 hours ago '''
             if self._reset_last_ran:
                 self._ATTRS[zonelastran] = dt_util.now() - timedelta(hours=23)
+            ''' reset the time remaining to 0 '''
+            zoneremaining = ('zone%s_remaining' % (zn)) 
+            self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
 
             setattr(self, '_state_attributes', self._ATTRS)
             result = self.async_schedule_update_ha_state()
@@ -522,9 +531,12 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         self._stop = True
         zn = 0
         for zone in self._zones:
-        
+
             await self._irrigationzones[zn].async_turn_off()
             zn += 1
+            zoneremaining = ('zone%s_remaining' % (zn)) 
+            self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
+            setattr(self, '_state_attributes', self._ATTRS)
 
         self._state = False
         self.async_schedule_update_ha_state()
