@@ -232,6 +232,8 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.6
+* Add run zone button to the custom card
 ### 4.0.5
 * Add ability to disable a zone
 * Handling new and changes zones to an existing program
@@ -254,26 +256,3 @@ irrigationprogram.stop_programs:
 * DEPRECATED the *run_days* attribute. Simply rename this attribute to *run_freq* to maintain the functionality
 * Optionally allow multiple programs to run simultaneously use *allow_multiple* config option
 * Allow monitoring of the irrigation controller hardware if supported, will not run schedule if controller is offline
-
-### 3.0.3
-* Update to validate the referenced objects after HASS has started.
-
-### 3.0.2
-* Update to fix bug in last run date attribute. Impacted Programs that run on the Frequency option.
-
-### 3.0.0
-* BREAKING CHANGE: deprecate the irrigationzone component
-* Move zone details into the irrigationprogram component - feature request
-* Move rain sensor to the zone definition - feature request 
-* Move ignore rain sensor into the zone definition - feature request
-* Improve validation of components to warn when HA objects are not found
-* Add run time adjustment - feature request
-* improved async behavior when automatically starting the program
-
-### 1.1.0 
-* add version to manifest.json files
-* tweak how the program turns off zones
-* remove validation for time.sensor
-
-### 0.2
-•            Remove requirement for HA time sensor
