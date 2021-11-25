@@ -41,13 +41,23 @@ async def async_setup(hass, config):
 
 
     async def async_run_zone(call):
+
+        DATA = {}
+        await hass.services.async_call(DOMAIN,
+                                 'stop_programs',
+                                 DATA)
+
+        await asyncio.sleep(1)
+
         program = call.data.get('entity_id')
         zone = call.data.get('zone')
         DATA = {ATTR_ENTITY_ID: program, 'zone':zone}
         await hass.services.async_call(DOMAIN,
                                  'set_run_zone',
                                  DATA)
+
         await asyncio.sleep(1)
+
         DATA = {ATTR_ENTITY_ID: program}
         await hass.services.async_call(CONST_SWITCH,
                                  SERVICE_TURN_ON,
