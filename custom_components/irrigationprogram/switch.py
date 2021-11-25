@@ -473,11 +473,9 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             z_last_ran = state.attributes.get(a)
             ''' check if the zone should run '''
             
-            _LOGGER.warning('1 self._run_zone: %s z_name: %s', self._run_zone, z_name)
             if self._run_zone:
                 if z_name != self._run_zone:
                     await asyncio.sleep(1)
-                    _LOGGER.warning('2 self._run_zone: %s z_name: %s', self._run_zone, z_name)
                     continue
 
             if self._irrigationzones[zn-1].disable_zone_value() == True:
