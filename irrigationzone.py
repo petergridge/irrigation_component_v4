@@ -173,7 +173,7 @@ class irrigationzone:
     def run_time(self):
         ''' update the run time component '''
                 
-        z_water = math.ceil(float(self.water_value()) * float(self.water_adjust_value()))
+        z_water = math.ceil(int(float(self.water_value()) * float(self.water_adjust_value())))
 
         self._run_time = (((z_water + self.wait_value()) * self.repeat_value()) - self.wait_value()) * 60
 
