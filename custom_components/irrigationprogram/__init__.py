@@ -1,4 +1,5 @@
 import logging
+import asyncio
 
 from .const import (
     DOMAIN,
@@ -8,13 +9,11 @@ from .const import (
 
 
 from homeassistant.const import (
-#    CONF_SWITCHES,
     SERVICE_TURN_OFF,
+    SERVICE_TURN_ON,
     ATTR_ENTITY_ID,
-#    CONF_TIMEOUT
     )
 
-# Shortcut for the logger
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -42,29 +41,27 @@ async def async_setup(hass, config):
 
 
     async def async_run_zone(call):
-
-        zone = call.data.get('zone','')
-        entity_id = call.data.get('entity_id','')
-
-        _LOGGER.warning('run zone %s',zone)
-
-        device = SWITCH_ID_FORMAT.format(x)
-#        DATA = {ATTR_ENTITY_ID: entity_id}
-#        await hass.services.async_call(CONST_SWITCH,
-#                                 SERVICE_TURN_ON,
-#                                 DATA)
-
-    """ END async_run_zone """
-
+        program = call.data.get('entity_id')
+        zone = call.data.get('zone')
+        DATA = {ATTR_ENTITY_ID: program, 'zone':zone}
+        await hass.services.async_call(DOMAIN,
+                                 'set_run_zone',
+                                 DATA)
+        await asyncio.sleep(1)
+        DATA = {ATTR_ENTITY_ID: program}
+        await hass.services.async_call(CONST_SWITCH,
+                                 SERVICE_TURN_ON,
+                                 DATA)
 
 
     """ register services """
     hass.services.async_register(DOMAIN,
                                  'stop_programs',
                                  async_stop_programs)
-
+    """ register services """
     hass.services.async_register(DOMAIN,
                                  'run_zone',
                                  async_run_zone)
+
 
     return True

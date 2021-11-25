@@ -8,6 +8,7 @@ import homeassistant.util.dt as dt_util
 from homeassistant.util import slugify
 from homeassistant.core import callback
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity import async_generate_entity_id
 from homeassistant.helpers.event import async_track_state_change
 
@@ -70,6 +71,7 @@ SWITCH_SCHEMA = vol.All(
         vol.Optional(ATTR_MONITOR_CONTROLLER): cv.entity_domain('binary_sensor'),
         vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
         vol.Optional(ATTR_MULTIPLE,default=False): cv.boolean,
+        vol.Optional(ATTR_RESET,default=False): cv.boolean,
         vol.Optional(ATTR_RESET,default=False): cv.boolean,
         vol.Required(ATTR_ZONES): [{
             vol.Required(ATTR_ZONE, 'zone'): cv.entity_domain(CONST_SWITCH),
@@ -135,8 +137,19 @@ async def _async_create_entities(hass, config):
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+#async def async_setup_entry(hass, entry):
     '''Set up the irrigation switches.'''
     async_add_entities(await _async_create_entities(hass, config))
+
+    platform = entity_platform.async_get_current_platform()
+ 
+    platform.async_register_entity_service(
+        'set_run_zone',
+        {
+            vol.Required(ATTR_ZONE): cv.string,
+        },
+        "entity_run_zone",
+    )
 
 
 class IrrigationProgram(SwitchEntity, RestoreEntity):
@@ -184,7 +197,8 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         self._template           = None
         self._allow_multiple_zones = multiple
         self._reset_last_ran     = reset
-        self._irrigationzones = []
+        self._irrigationzones    = []
+        self._run_zone           = None
         ''' Validate and Build a template from the attributes provided '''
 
         _LOGGER.debug('Start Time %s: %s',self._start_time, hass.states.get(self._start_time))
@@ -210,7 +224,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
     @callback
     def _update_state(self, result):
         super()._update_state(result)
-
 
     async def async_added_to_hass(self):
 
@@ -340,7 +353,10 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
         await super().async_added_to_hass()
 
-
+    def entity_run_zone(self, zone: str) -> None:
+        self._run_zone = zone 
+        self._triggered_manually = True
+        
     @property
     def name(self):
         '''Return the name of the variable.'''
@@ -394,6 +410,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
 
         ''' Initialise for stop programs service call '''
+        z_zone_found  = False
         p_icon        = self._icon
         p_name        = self._name
         self._stop    = False
@@ -412,11 +429,21 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         zn = 0
         for zone in self._zones:
             z_run_freq    = zone.get(ATTR_RUN_FREQ,self._run_freq)
+            z_name        = zone.get(CONF_NAME)
             zn += 1
             a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
             z_last_ran = state.attributes.get(a)
 
             ''' check if the zone should run '''
+            ''' Request made to run only a zone '''
+            if self._run_zone:
+
+                if z_name == self._run_zone:
+                    z_zone_found = True
+                else:
+                    z_zone_found = False
+                    continue
+                    
             if self._irrigationzones[zn-1].disable_zone_value() == True:
                 zoneremaining = ('zone%s_remaining' % (zn)) 
                 self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
@@ -440,14 +467,20 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
         ''' end of for zone loop to calculate total run time '''
 
+        if not z_zone_found and self._run_zone:
+            self._run_zone = None
         ''' Iterate through all the defined zones and run when required'''
         zn = 0
         for zone in self._zones:
             z_run_freq    = zone.get(ATTR_RUN_FREQ,self._run_freq)
+            z_name        = zone.get(CONF_NAME)
             zn += 1
             a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
             z_last_ran = state.attributes.get(a)
             ''' check if the zone should run '''
+            if self._run_zone:
+                if z_name != self._run_zone:
+                    continue
             if self._irrigationzones[zn-1].disable_zone_value() == True:
                 zoneremaining = ('zone%s_remaining' % (zn)) 
                 self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
@@ -510,8 +543,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             result = self.async_schedule_update_ha_state()
 
         ''' end of for zone loop '''
-
-        if not self._stop:
+        if not self._triggered_manually and not self._stop:
             self._ATTRS [ATTR_LAST_RAN] = p_last_ran
 
         self._ATTRS [ATTR_REMAINING] = ('%d:%02d:%02d' % (0, 0, 0))
@@ -528,7 +560,9 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
     async def async_turn_off(self, **kwargs):
 
-        self._stop = True
+        self._stop          = True
+        self._run_zone      = None
+
         zn = 0
         for zone in self._zones:
 
