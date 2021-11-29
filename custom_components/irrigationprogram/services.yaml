@@ -1,2 +1,12 @@
 stop_programs:
-    description: Stop any running programs or zones.
+    description: Stop any running Irrigation Programs or zones.
+
+run_zone:
+    description: Run an Irrigation Program zone.
+    target:
+    fields:
+        zone:
+            name: Zone
+            description: The zone to be turned on
+            required: true
+            example: Lawn

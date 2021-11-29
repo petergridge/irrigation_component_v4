@@ -72,7 +72,6 @@ SWITCH_SCHEMA = vol.All(
         vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
         vol.Optional(ATTR_MULTIPLE,default=False): cv.boolean,
         vol.Optional(ATTR_RESET,default=False): cv.boolean,
-        vol.Optional(ATTR_RESET,default=False): cv.boolean,
         vol.Required(ATTR_ZONES): [{
             vol.Required(ATTR_ZONE, 'zone'): cv.entity_domain(CONST_SWITCH),
             vol.Required(CONF_NAME): cv.string,
@@ -143,7 +142,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     platform = entity_platform.async_get_current_platform()
  
     platform.async_register_entity_service(
-        'set_run_zone',
+        'run_zone',
         {
             vol.Required(ATTR_ZONE): cv.string,
         },
@@ -211,7 +210,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             template = template + " and is_state('" + self._monitor_controller + "', 'on') "
 
         template = "{{ " + template + " }}"
-
+        
         _LOGGER.debug('-------------------- on start: %s ----------------------------',self._name)
         _LOGGER.debug('Template: %s', template)
 
@@ -261,12 +260,15 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             self._irrigationzones.append (irrigationzone(self.hass, zone,self._run_freq))
 
             ''' check if the zone name has changed or is new and reset last run time '''
-            a = ('zone%s_%s' % (zn, CONF_NAME))
-            z_name = state.attributes.get(a)
-            a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
-            z_last_ran = state.attributes.get(a)
+            if state != None:
+                a = ('zone%s_%s' % (zn, CONF_NAME))
+                z_name = state.attributes.get(a)
+                a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
+                z_last_ran = state.attributes.get(a)
+
             if z_name != zone.get(CONF_NAME):
                 z_last_ran = None
+            a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
             self._ATTRS [a] = z_last_ran
             self._irrigationzones[zn-1].set_last_ran(z_last_ran)
             zoneremaining = ('zone%s_remaining' % (zn))   
@@ -352,9 +354,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
         await super().async_added_to_hass()
 
-    def entity_run_zone(self, zone: str) -> None:
-        self._run_zone = zone 
-        self._triggered_manually = True
         
     @property
     def name(self):
@@ -382,6 +381,11 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         return self._icon
 
     @property
+    def run_zone(self):
+        '''Return the icon to be used for this entity.'''
+        return self._run_zone
+
+    @property
     def state_attributes(self):
         '''Return the state attributes.
         Implemented by component base class.
@@ -400,6 +404,18 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
         self.async_write_ha_state()
 
+    async def entity_run_zone(self, zone: str) -> None:
+        
+        self._state   = True
+       
+        self._run_zone = zone 
+        self._triggered_manually = True
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.async_turn_on())
+
+        self.async_schedule_update_ha_state()
+        self.async_write_ha_state()
+
     async def async_turn_on(self, **kwargs):
 
         def format_run_time(runtime):
@@ -408,6 +424,14 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             minsec = divmod(runtime,60)
             return ('%d:%02d:%02d' % (hour, minsec[0], minsec[1]))
 
+        if not self._allow_multiple_zones:
+            self._stop = True
+            DATA = {}
+            await self.hass.services.async_call(DOMAIN,
+                                     'stop_programs',
+                                     DATA)
+            await asyncio.sleep(1)
+             
 
         ''' Initialise for stop programs service call '''
         z_zone_found  = False
@@ -431,8 +455,11 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             z_run_freq    = zone.get(ATTR_RUN_FREQ,self._run_freq)
             z_name        = zone.get(CONF_NAME)
             zn += 1
-            a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
-            z_last_ran = state.attributes.get(a)
+            if state == None:
+                z_last_ran = None
+            else:
+                a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
+                z_last_ran = state.attributes.get(a)
 
             ''' check if the zone should run '''
             ''' Request made to run only a zone '''
@@ -469,8 +496,12 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             z_run_freq    = zone.get(ATTR_RUN_FREQ,self._run_freq)
             z_name        = zone.get(CONF_NAME)
             zn += 1
-            a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
-            z_last_ran = state.attributes.get(a)
+            if state == None:
+                z_last_ran = None
+            else:
+                a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
+                z_last_ran = state.attributes.get(a)
+
             ''' check if the zone should run '''
             
             if self._run_zone:
@@ -561,7 +592,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
     async def async_turn_off(self, **kwargs):
 
         self._stop          = True
-        self._run_zone      = None
+#        self._run_zone      = None
 
         zn = 0
         for zone in self._zones:
