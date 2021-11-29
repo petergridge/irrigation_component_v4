@@ -136,51 +136,24 @@ A self contained working sample configuration is provided in the packages direct
 
 ### Example configuration.yaml entry
 ```yaml
+    switch:
 
-  switch:
-  - platform: irrigationprogram
-    switches: 
-      morning:
-        name: Morning
-        irrigation_on: input_boolean.irrigation_on
-        start_time: input_datetime.irrigation_morning_start_time
-        run_freq: input_select.irrigation_freq
-        icon: mdi:fountain
-        zones:
-        # Adjust watering time used 
-        # Watering time adjusted to water * adjust_watering_time
-          - zone: switch.irrigation_solenoid_01
-            name: Pot Plants
-            water: input_number.irrigation_pot_plants_run
-            water_adjustment: input_number.adjust_run_time
-            wait: input_number.irrigation_pot_plants_wait
-            repeat: input_number.irrigation_pot_plants_repeat
-            icon: 'mdi:flower'
-        # No rain sensor defined, will always water to the schedule
-          - zone: switch.irrigation_solenoid_03
-            name: Greenhouse
-            water: input_number.irrigation_greenhouse_run
-            wait: input_number.irrigation_greenhouse_wait
-            repeat: input_number.irrigation_greenhouse_repeat
-            icon: 'mdi:flower'
-        # Rain sensor used, watering time only
-          - zone: switch.irrigation_solenoid_02
-            name: Front Lawn
-            water: input_number.irrigation_lawn_run
-            rain_sensor: binary_sensor.irrigation_rain_sensor
-            ignore_rain_sensor: switch.ignore_rain_sensor
-
-    # minimal configuration, will run everyday at the time specified
-      afternoon:
-        name: Afternoon
-        start_time: input_datetime.irrigation_afternoon_start_time
-        zones:
-          - zone: switch.irrigation_solenoid_01
-            name: Pot Plants
-            water: input_number.irrigation_pot_plants_run
-          - zone: switch.irrigation_solenoid_02
-            name: Front Lawn
-            water: input_number.irrigation_lawn_run
+      - platform: irrigationprogram
+        switches: 
+          afternoon:
+            irrigation_on: input_boolean.irrigation_on
+            name: Afternoon
+            start_time: input_datetime.irrigation_aafternoon_start_time
+            run_freq: input_select.afternoon_irrigation_freq
+            zones:
+              - zone: switch.solenoid_1
+                name: Lawn
+                water: input_number.irrigation_lawn_water
+              - zone: switch.solenoid_2
+                name: Pot Plants
+                water: input_number.irrigation_pot_plants_water
+                wait: input_number.irrigation_pot_plants_wait
+                repeat: input_number.irrigation_pot_plants_repeat
 ```
 ## CONFIGURATION VARIABLES
 
