@@ -90,10 +90,12 @@ automation:
         value: "{{ value template calculation }}"
 ```
 
-### Run Days and Run Frequency
+### Run Frequency
 Run frequency allows the definition of when the program will run.
 
-This can be a specific set of days or the number of days between watering events. This can be defined at the Program or zone level. Application at the zone level allows different zones to execute at the same time but using varying frquencies. for example: Vege Patch every two days and the Lawn once a week.
+This can be a specific set of days or the number of days between watering events and can be defined at the Program or zone level. 
+
+Application at the zone level allows different zones to execute at the same time but using varying frquencies. For example: Vege Patch every two days and the Lawn once a week.
 
 * *Run Freq* allows the water to occur at a specified frequency, for example, every 3 days or only on Monday, Wednesday and Saturday. 
 * *Run Days DEPRECATED*  in this version, if you used this in version 3 simply rename *Run Days* to *Run Freq* to retain the same behaviour.
