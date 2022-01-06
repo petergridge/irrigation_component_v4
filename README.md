@@ -232,6 +232,8 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.7
+* fix issue with new installations
 ### 4.0.6
 * Add run zone button to the custom card
 ### 4.0.5
