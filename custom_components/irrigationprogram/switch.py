@@ -262,9 +262,15 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
             ''' check if the zone name has changed or is new and reset last run time '''
             a = ('zone%s_%s' % (zn, CONF_NAME))
-            z_name = state.attributes.get(a)
+            try:
+                z_name = state.attributes.get(a)
+            except:
+                z_name = None
             a = ('zone%s_%s' % (zn, ATTR_LAST_RAN))
-            z_last_ran = state.attributes.get(a)
+            try:
+                z_last_ran = state.attributes.get(a)
+            except:
+                z_last_run = None
             if z_name != zone.get(CONF_NAME):
                 z_last_ran = None
             self._ATTRS [a] = z_last_ran
