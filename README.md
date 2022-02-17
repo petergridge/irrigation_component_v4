@@ -186,6 +186,8 @@ A self contained working sample configuration is provided in the packages direct
 *(string)(Required)* the switch entity.
 >#### name
 *(string)(Optional)* display name for the irrigation program switch.
+>#### show_config
+*(input_boolean)(Optional)* Attribute to support hiding the configuration detail in the custom card
 >#### start_time
 *(input_datetime)(Required)* the local time for the program to start.
 >#### run_freq 
@@ -232,6 +234,8 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.8
+* implement support for hiding configuration in the custom card
 ### 4.0.7
 * fix issue with new installations
 ### 4.0.6
