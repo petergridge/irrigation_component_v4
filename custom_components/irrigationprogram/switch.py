@@ -25,6 +25,7 @@ from homeassistant.components.switch import (
 from .const import (
     DOMAIN,
     ATTR_START,
+    ATTR_HIDE_CONFIG,
     ATTR_RUN_FREQ,
     ATTR_RUN_DAYS,
     ATTR_IRRIGATION_ON,
@@ -68,10 +69,10 @@ SWITCH_SCHEMA = vol.All(
         vol.Optional(CONF_NAME): cv.string,
         vol.Optional(ATTR_RUN_FREQ): cv.entity_domain('input_select'),
         vol.Optional(ATTR_IRRIGATION_ON): cv.entity_domain('input_boolean'),
+        vol.Optional(ATTR_HIDE_CONFIG): cv.entity_domain('input_boolean'),
         vol.Optional(ATTR_MONITOR_CONTROLLER): cv.entity_domain('binary_sensor'),
         vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
         vol.Optional(ATTR_MULTIPLE,default=False): cv.boolean,
-        vol.Optional(ATTR_RESET,default=False): cv.boolean,
         vol.Optional(ATTR_RESET,default=False): cv.boolean,
         vol.Required(ATTR_ZONES): [{
             vol.Required(ATTR_ZONE, 'zone'): cv.entity_domain(CONST_SWITCH),
@@ -105,6 +106,7 @@ async def _async_create_entities(hass, config):
     for device, device_config in config[CONF_SWITCHES].items():
         friendly_name           = device_config.get(CONF_NAME, device)
         start_time              = device_config.get(ATTR_START)
+        hide_config             = device_config.get(ATTR_HIDE_CONFIG)
         run_freq                = device_config.get(ATTR_RUN_FREQ)
         irrigation_on           = device_config.get(ATTR_IRRIGATION_ON)
         multiple                = device_config.get(ATTR_MULTIPLE)
@@ -120,6 +122,7 @@ async def _async_create_entities(hass, config):
                 device,
                 friendly_name,
                 start_time,
+                hide_config,
                 run_freq,
                 irrigation_on,
                 monitor_controller,
@@ -159,6 +162,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         device_id,
         friendly_name,
         start_time,
+        hide_config,
         run_freq,
         irrigation_on,
         monitor_controller,
@@ -179,6 +183,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         self._name               = str(friendly_name).title()
         self._program_name       = str(friendly_name).title()
         self._start_time         = start_time
+        self._hide_config        = hide_config
         self._run_freq           = run_freq
         self._irrigation_on      = irrigation_on
         self._monitor_controller = monitor_controller
@@ -240,9 +245,10 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 self._last_run = dt_util.now() - timedelta(days=10)
 
         self._ATTRS = {}
-        self._ATTRS [ATTR_LAST_RAN] = self._last_run
-        self._ATTRS [ATTR_REMAINING] = ('%d:%02d:%02d' % (0, 0, 0))
-        self._ATTRS [ATTR_START] = self._start_time
+        self._ATTRS [ATTR_LAST_RAN]    = self._last_run
+        self._ATTRS [ATTR_REMAINING]   = ('%d:%02d:%02d' % (0, 0, 0))
+        self._ATTRS [ATTR_START]       = self._start_time
+        self._ATTRS [ATTR_HIDE_CONFIG] = self._hide_config
 
         if self._run_freq is not None:
             self._ATTRS [ATTR_RUN_FREQ] = self._run_freq
@@ -526,7 +532,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 self._ATTRS [zoneremaining] = format_run_time(self._irrigationzones[zn-1].remaining_time())
  
                 setattr(self, '_state_attributes', self._ATTRS)
-
 
                 self.async_schedule_update_ha_state()
                 self.async_write_ha_state()
