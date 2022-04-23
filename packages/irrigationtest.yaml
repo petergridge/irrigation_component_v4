@@ -145,7 +145,7 @@
         icon: mdi:water
 
     input_select:
-    # Use either run days of Frequency they are mutually exclusive
+    # Run Days can be a Numeric, this represent the frequency of watering or Days where it will run on the specified days
 
       irrigation_run_days:
         name: Run Days
@@ -159,10 +159,6 @@
           - "['Tue','Fri']"
           - "['Mon','Wed','Fri']"
           - "['Mon','Tue','Wed','Thu','Fri','Sat','Sun']"
-
-      irrigation_freq:
-        name: Frequency
-        options:
           - "1"
           - "2"
           - "3"
