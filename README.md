@@ -61,6 +61,9 @@ The rain sensor can be optionally defined in each zone. You can:
 * Have a different sensor for different areas
 * Configure the ability to ignore the rain sensor
 
+### Time or Volume based watering
+You can define a 'flow sensor' that provides a volume/minute rate. eg litres per minute. Once defied the 'water' attribute will be read as volume eg 15 litres not 15 minutes.
+
 ### Monitor Controller feature
 If this binary sensor is defined it will not execute a schedule if the controller is offline. This is ideal for ESP Home implementations.
 
@@ -208,10 +211,14 @@ A self contained working sample configuration is provided in the packages direct
 *(entity)(Required)* This is the switch that represents the solenoid to be triggered.
 >>#### name
 *(string)(Required)* This is the name displayed when the zone is active.
+>#### flow_sensor
+*(string)(Optional)* A sensor entity that provides the flow rate per minute. If the provided the water value will be assessed as volume.
 >>#### rain_sensor
 *(binary_sensor)(Optional)* A binary sensor - True or On will prevent the irrigation starting. e.g. rain sensor, greenhouse moisture sensor or template sensor that checks the weather
 >>#### ignore_rain_sensor
 *(input_boolean)(Optional)* Attribute to allow the zone to run regardless of the state of the rain sensor. Useful for a greenhouse zone that never gets rain.
+>>#### water
+*(input_number)(Required)* This it the period that the zone will turn the switch_entity on for.
 >>#### water
 *(input_number)(Required)* This it the period that the zone will turn the switch_entity on for.
 >>#### water_adjustment
@@ -234,6 +241,11 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.10
+* Add volume based watering option. Water can occur using a flow meter instead of based on time
+* Add capability to turn on a pump or other switch when starting a zone
+* fix error in remaining time presentation
+
 ### 4.0.8
 * implement support for hiding configuration in the custom card
 ### 4.0.7
