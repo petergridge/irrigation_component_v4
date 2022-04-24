@@ -200,7 +200,7 @@ A self contained working sample configuration is provided in the packages direct
 >#### irrigation_on
 *(input_boolean)(Optional)* Attribute to temporarily disable the watering schedule
 >#### icon
-*(icon)(Optional)* The icon displayed for the program. (default: mdi:fountain)
+*(icon)(Optional)* The icon displayed for the program. (default: mdi:fountain) Not used in the Custome Card.
 >#### allow_multiple
 *(boolean)(Optional)* Allow multiple zones to be active at the same time (default: false)
 >#### unique_id
@@ -211,7 +211,7 @@ A self contained working sample configuration is provided in the packages direct
 *(entity)(Required)* This is the switch that represents the solenoid to be triggered.
 >>#### name
 *(string)(Required)* This is the name displayed when the zone is active.
->#### flow_sensor
+>>#### flow_sensor
 *(string)(Optional)* A sensor entity that provides the flow rate per minute. If the provided the water value will be assessed as volume.
 >>#### rain_sensor
 *(binary_sensor)(Optional)* A binary sensor - True or On will prevent the irrigation starting. e.g. rain sensor, greenhouse moisture sensor or template sensor that checks the weather
@@ -230,9 +230,11 @@ A self contained working sample configuration is provided in the packages direct
 >>#### run_freq 
 *(input_select)(optional)* Indicate how often to run. If not provided will run every day.
 >> #### icon
-*(icon)(Optional)* This will replace the default mdi:water icon shown when the zone is running.
+*(icon)(Optional)* This will replace the default mdi:water icon shown when the zone is running. Not used in the Custome Card.
 >> #### disable_zone
 *(input_boolean)(Optional)* This will disable a zone, preventing it from running in either manual or program executions.
+>> #### enable_zone
+*(input_boolean)(Optional)* This is the inverse of disable zone and will disable a zone, preventing it from running in either manual or program executions. I recommend using this option as I would like to depricate the disable_zone option.
 
 ## SERVICES
 ```yaml
@@ -241,11 +243,13 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.11
+* Provide an enable_zone option to allow a more intuitive presentation in the Custom Card. Requires Custom Card version 4.0.11
+
 ### 4.0.10
 * Add volume based watering option. Water can occur using a flow meter instead of based on time
 * Add capability to turn on a pump or other switch when starting a zone
 * fix error in remaining time presentation
-
 ### 4.0.8
 * implement support for hiding configuration in the custom card
 ### 4.0.7
