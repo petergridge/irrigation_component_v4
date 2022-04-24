@@ -34,6 +34,7 @@ from .const import (
     CONST_SWITCH,
     ATTR_IGNORE_RAIN_SENSOR,
     ATTR_DISABLE_ZONE,
+    ATTR_ENABLE_ZONE,
     ATTR_ZONES,
     ATTR_ZONE,
     ATTR_PUMP,
@@ -89,6 +90,7 @@ SWITCH_SCHEMA = vol.All(
             vol.Optional(ATTR_RAIN_SENSOR): cv.entity_domain('binary_sensor'),
             vol.Optional(ATTR_IGNORE_RAIN_SENSOR): vol.All(vol.Any(cv.entity_domain('input_boolean'),cv.boolean)),
             vol.Optional(ATTR_DISABLE_ZONE): vol.All(vol.Any(cv.entity_domain('input_boolean'),cv.boolean)),
+            vol.Optional(ATTR_ENABLE_ZONE): vol.All(vol.Any(cv.entity_domain('input_boolean'),cv.boolean)),
             vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
         }],
         vol.Optional(CONF_UNIQUE_ID): cv.string,
@@ -317,6 +319,9 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             if zone.get(ATTR_DISABLE_ZONE) is not None:
                 a = ('zone%s_%s' % (zn, ATTR_DISABLE_ZONE))
                 self._ATTRS [a] = zone.get(ATTR_DISABLE_ZONE)
+            if zone.get(ATTR_ENABLE_ZONE) is not None:
+                a = ('zone%s_%s' % (zn, ATTR_ENABLE_ZONE))
+                self._ATTRS [a] = zone.get(ATTR_ENABLE_ZONE)
 
         self._ATTRS ['zone_count'] = zn
         setattr(self, '_state_attributes', self._ATTRS)

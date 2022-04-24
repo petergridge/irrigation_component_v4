@@ -18,6 +18,7 @@ from .const import (
     ATTR_WAIT,
     ATTR_REPEAT,
     ATTR_DISABLE_ZONE,
+    ATTR_ENABLE_ZONE,
     ATTR_WATER_ADJUST,
 )
 
@@ -49,6 +50,8 @@ class irrigationzone:
         self._rain_sensor        = zone_data.get(ATTR_RAIN_SENSOR)
         self._ignore_rain_sensor = zone_data.get(ATTR_IGNORE_RAIN_SENSOR)
         self._disable_zone       = zone_data.get(ATTR_DISABLE_ZONE)
+        self._enable_zone        = zone_data.get(ATTR_ENABLE_ZONE)
+
         
         self._flow_sensor        = zone_data.get(ATTR_FLOW_SENSOR)
         self._water              = zone_data.get(ATTR_WATER)
@@ -175,12 +178,31 @@ class irrigationzone:
 
     def disable_zone_value(self):
         self._disable_zone_value = False
+        
         try:
             if self._disable_zone is not None:
                 self._disable_zone_value = self.hass.states.is_state(self._disable_zone,'on')
         except:
             pass
+        
+        try:
+            if self._enable_zone is not None:
+                self._disable_zone_value = self.hass.states.is_state(self._enable_zone,'off')
+        except:
+            pass
         return self._disable_zone_value
+
+    def enable_zone(self):
+        return self._enable_zone
+
+    def enable_zone_value(self):
+        self._enable_zone_value = False
+        try:
+            if self._enable_zone is not None:
+                self._enable_zone_value = self.hass.states.is_state(self._enable_zone,'on')
+        except:
+            pass
+        return self._enable_zone_value
 
     def remaining_time(self):
         ''' remaining time or remaining volume '''
@@ -383,6 +405,9 @@ class irrigationzone:
             valid = False
         if  self._disable_zone is not None and self.hass.states.async_available(self._disable_zone):
             _LOGGER.error('%s not found',self._disable_zone)
+            valid = False
+        if  self._enable_zone is not None and self.hass.states.async_available(self._enable_zone):
+            _LOGGER.error('%s not found',self._enable_zone)
             valid = False
  
         return valid
