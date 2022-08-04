@@ -146,7 +146,6 @@ A self contained working sample configuration is provided in the packages direct
         irrigation_on: input_boolean.irrigation_on
         start_time: input_datetime.irrigation_morning_start_time
         run_freq: input_select.irrigation_freq
-        icon: mdi:fountain
         zones:
         # Adjust watering time used 
         # Watering time adjusted to water * adjust_watering_time
@@ -156,14 +155,12 @@ A self contained working sample configuration is provided in the packages direct
             water_adjustment: input_number.adjust_run_time
             wait: input_number.irrigation_pot_plants_wait
             repeat: input_number.irrigation_pot_plants_repeat
-            icon: 'mdi:flower'
         # No rain sensor defined, will always water to the schedule
           - zone: switch.irrigation_solenoid_03
             name: Greenhouse
             water: input_number.irrigation_greenhouse_run
             wait: input_number.irrigation_greenhouse_wait
             repeat: input_number.irrigation_greenhouse_repeat
-            icon: 'mdi:flower'
         # Rain sensor used, watering time only
           - zone: switch.irrigation_solenoid_02
             name: Front Lawn
@@ -199,10 +196,10 @@ A self contained working sample configuration is provided in the packages direct
 *(binary_sensor)(optional)* Detect if the irrigation controller is online. Autoated schedule will not execute if offline.
 >#### irrigation_on
 *(input_boolean)(Optional)* Attribute to temporarily disable the watering schedule
->#### icon
-*(icon)(Optional)* The icon displayed for the program. (default: mdi:fountain) Not used in the Custome Card.
->#### allow_multiple
-*(boolean)(Optional)* Allow multiple zones to be active at the same time (default: false)
+>#### zone_groups
+*(inout_select)(Optional)* Allow multiple zones to be active at the same time input must be in the format [[1,2],[3,4]] this will run zones 1 and 2 simultaneously and then zones 3 and 4. to run all four zones sequentially the format is [[1],[2],[3],[4]].
+>#### inter_zone_delay
+*(inout_number)(Optional)* Delays the start of each zone by the specified number of seconds.
 >#### unique_id
 *(string)(Optional)* An ID that uniquely identifies this switch. Set this to an unique value to allow customisation trough the UI.
 >#### Zones 
@@ -229,8 +226,6 @@ A self contained working sample configuration is provided in the packages direct
 *(input_number)(Optional)* This is the number of cycles to run water/wait/repeat.
 >>#### run_freq 
 *(input_select)(optional)* Indicate how often to run. If not provided will run every day.
->> #### icon
-*(icon)(Optional)* This will replace the default mdi:water icon shown when the zone is running. Not used in the Custome Card.
 >> #### disable_zone
 *(input_boolean)(Optional)* This will disable a zone, preventing it from running in either manual or program executions.
 >> #### enable_zone
@@ -244,8 +239,12 @@ irrigationprogram.stop_programs:
 
 ## REVISION HISTORY
 ### 4.0.12
-* Add inter zone delay and zone grouping functionality. Requires Custom Card version 4.0.12
-* Breaking change - Remove ICON attributes
+* Add inter zone delay to introducae a delay between zones starting
+* Add zone grouping functionality allow groups of zones to run concurrently, this is a list of options to support different groupings. 
+* Requires Custom Card version 4.0.12
+* Breaking change:
+* Remove ICON attributes
+* Remove allow_multiple option as this is replaced by zone groups.
 ### 4.0.11
 * Provide an enable_zone option to allow a more intuitive presentation in the Custom Card. Requires Custom Card version 4.0.11
 ### 4.0.10
