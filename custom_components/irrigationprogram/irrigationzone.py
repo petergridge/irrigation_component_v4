@@ -44,7 +44,6 @@ class irrigationzone:
         self._name               = zone_data.get(CONF_NAME)
         self._switch             = zone_data.get(ATTR_ZONE)
         self._pump               = zone_data.get(ATTR_PUMP)
-        
         self._run_freq           = zone_data.get(ATTR_RUN_FREQ,p_run_freq)
         self._icon               = zone_data.get(ATTR_ICON)
         self._rain_sensor        = zone_data.get(ATTR_RAIN_SENSOR)
@@ -63,7 +62,7 @@ class irrigationzone:
         self._run_time           = 0
         self._default_run_time   = 0
         self._remaining_time     = 0
-        self._state              = 'on'
+        self._state              = 'off'
         self._stop               = False
 
  
@@ -271,10 +270,8 @@ class irrigationzone:
         
             water wait repeat cycle using either volume of time
             remaining is volume or time
-        
         '''
 
-        
         step = 1
         self._stop = False
         z_initial_volume = self.flow_sensor_value()
@@ -300,14 +297,13 @@ class irrigationzone:
                                                     SERVICE_TURN_ON,
                                                     PUMP)
 
-
-
             if self._flow_sensor is not None:
                 ''' calculate the remaining volume '''
                 water = z_water
                 while water > 0:
-                    self._remaining_time -= self.flow_sensor_value()/(60/step)
+                    #self._remaining_time -= self.flow_sensor_value()/(60/step)
                     water -= self.flow_sensor_value()/(60/step)
+                    self._remaining_time = water/self.flow_sensor_value()*60
                     if self._remaining_time < 0:
                         self._remaining_time = 0
                     await asyncio.sleep(step)
@@ -344,6 +340,8 @@ class irrigationzone:
             ''' turn the switch entity off '''
             if i <= 1 or self._stop:
                 ''' last/only cycle '''
+                self._remaining_time = 0
+                
                 if self.hass.states.is_state(self._switch,'on'):
                     await self.hass.services.async_call(CONST_SWITCH,
                                                         SERVICE_TURN_OFF,
@@ -363,6 +361,7 @@ class irrigationzone:
 
     async def async_turn_off(self, **kwargs):
         self._stop = True
+
         SOLENOID = {ATTR_ENTITY_ID: self._switch}
         await self.hass.services.async_call(CONST_SWITCH,
                                             SERVICE_TURN_OFF,
