@@ -64,6 +64,15 @@ The rain sensor can be optionally defined in each zone. You can:
 ### Time or Volume based watering
 You can define a 'flow sensor' that provides a volume/minute rate. eg litres per minute. Once defied the 'water' attribute will be read as volume eg 15 litres not 15 minutes.
 
+### Zone Groups
+You can optionally group zones to run concurrently or sequentially by providing a structured list of how you would like them to behave. Multiple options can be provided in a input select helper so the grouping can change as the seasons do. 
+
+The format of the list needs to be very specific and while not elegant from a UI perspective it provides the funtionality, this may be improved in future releases.
+For example if you have four zones:
+* to run all zones sequentially - [[1],[2],[3],[4]]
+* to run zone one and two concurrently and 3 and 4 sequentially - [[1,2],[3],[4]]
+* to run one, two and three concurrently and then four - [[1,2,3],[4]]
+
 ### Monitor Controller feature
 If this binary sensor is defined it will not execute a schedule if the controller is offline. This is ideal for ESP Home implementations.
 
