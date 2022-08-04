@@ -248,8 +248,8 @@ irrigationprogram.stop_programs:
 
 ## REVISION HISTORY
 ### 4.0.12
-* Add inter zone delay to introducae a delay between zones starting
-* Add zone grouping functionality allow groups of zones to run concurrently, this is a list of options to support different groupings. 
+* Add inter zone delay to provide a delay between zones starting.
+* Add zone grouping to allow groups of zones to run concurrently. 
 * Requires Custom Card version 4.0.12
 * Breaking change:
 * Remove ICON attributes
