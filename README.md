@@ -243,9 +243,11 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.12
+* Add inter zone delay and zone grouping functionality. Requires Custom Card version 4.0.12
+* Breaking change - Remove ICON attributes
 ### 4.0.11
 * Provide an enable_zone option to allow a more intuitive presentation in the Custom Card. Requires Custom Card version 4.0.11
-
 ### 4.0.10
 * Add volume based watering option. Water can occur using a flow meter instead of based on time
 * Add capability to turn on a pump or other switch when starting a zone
