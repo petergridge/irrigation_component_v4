@@ -2,7 +2,7 @@ from .irrigationzone import irrigationzone
 import logging
 import asyncio
 import voluptuous as vol
-import ast
+#import ast
 from datetime import timedelta
 import math
 import homeassistant.util.dt as dt_util
@@ -38,7 +38,8 @@ from .const import (
     ATTR_ENABLE_ZONE, #enable the zone even if raining
     ATTR_ZONES,
     ATTR_ZONE,
-    ATTR_ZONE_GROUPS,
+#    ATTR_ZONE_GROUPS,
+    ATTR_ZONE_GROUP,
     ATTR_PUMP,
     ATTR_FLOW_SENSOR,
     ATTR_WATER,
@@ -80,11 +81,12 @@ SWITCH_SCHEMA = vol.All(
 #        vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
 #        vol.Optional(ATTR_MULTIPLE,default=False): cv.boolean,
         vol.Optional(ATTR_RESET,default=False): cv.boolean,
-        vol.Optional(ATTR_ZONE_GROUPS): cv.entity_domain('input_select'),
+#        vol.Optional(ATTR_ZONE_GROUPS): cv.entity_domain('input_select'),
         vol.Required(ATTR_ZONES): [{
             vol.Required(ATTR_ZONE, 'zone'): cv.entity_domain(CONST_SWITCH),
             vol.Optional(ATTR_PUMP, 'pump'): cv.entity_domain(CONST_SWITCH),
             vol.Required(CONF_NAME): cv.string,
+            vol.Optional(ATTR_ZONE_GROUP): cv.entity_domain(['input_text','input_select']),
             vol.Optional(ATTR_FLOW_SENSOR): cv.entity_domain(['input_number','sensor']),
             vol.Required(ATTR_WATER): cv.entity_domain('input_number'),
             vol.Optional(ATTR_WATER_ADJUST): cv.entity_domain(['input_number','sensor']),
@@ -125,7 +127,7 @@ async def _async_create_entities(hass, config):
         unique_id               = device_config.get(CONF_UNIQUE_ID)
         monitor_controller      = device_config.get(ATTR_MONITOR_CONTROLLER)
         inter_zone_delay        = device_config.get(ATTR_DELAY)
-        zone_groups             = device_config.get(ATTR_ZONE_GROUPS)
+#        zone_groups             = device_config.get(ATTR_ZONE_GROUPS)
 
         switches.append(
             IrrigationProgram(
@@ -138,7 +140,7 @@ async def _async_create_entities(hass, config):
                 irrigation_on,
                 monitor_controller,
                 inter_zone_delay,
-                zone_groups,
+#                zone_groups,
 #                multiple,
                 reset,
                 zones,
@@ -177,7 +179,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         irrigation_on,
         monitor_controller,
         inter_zone_delay,
-        zone_groups,
+#        zone_groups,
 #        multiple,
         reset,
         zones,
@@ -197,7 +199,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         self._irrigation_on      = irrigation_on
         self._monitor_controller = monitor_controller
         self._inter_zone_delay   = inter_zone_delay 
-        self._zone_groups        = zone_groups
+#        self._zone_groups        = zone_groups
         self._zones              = zones
         self._state_attributes   = None
         self._state              = False
@@ -267,11 +269,11 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             self._ATTRS [ATTR_MONITOR_CONTROLLER] = self._monitor_controller
         if self._inter_zone_delay is not None:
             self._ATTRS [ATTR_DELAY] = self._inter_zone_delay
-        if self._zone_groups is not None:
-            self._ATTRS [ATTR_ZONE_GROUPS] = self._zone_groups
+#        if self._zone_groups is not None:
+#            self._ATTRS [ATTR_ZONE_GROUPS] = self._zone_groups
 
         ''' zone loop to set the attributes '''
-        self._total_runtime = 0
+#        self._total_runtime = 0
         zn = 0
 
         for zone in self._zones:
@@ -308,6 +310,9 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             if zone.get(ATTR_WAIT) is not None:
                 a = ('zone%s_%s' % (zn, ATTR_WAIT))
                 self._ATTRS [a] = zone.get(ATTR_WAIT)
+            if zone.get(ATTR_ZONE_GROUP) is not None:
+                a = ('zone%s_%s' % (zn, ATTR_ZONE_GROUP))
+                self._ATTRS [a] = zone.get(ATTR_ZONE_GROUP)
             if zone.get(ATTR_REPEAT) is not None:
                 a = ('zone%s_%s' % (zn, ATTR_REPEAT))
                 self._ATTRS [a] = zone.get(ATTR_REPEAT)
@@ -439,38 +444,52 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
         ''' use this to set the last ran attribute of the zones '''
         p_last_ran = dt_util.now()
+        self._name = self._program_name
 
-        ''' set or initialise the zone groups
-        assuming four zones
-        [[1],[2],[3],[4]] will run all for zones sequentially
-        [[1,3],[2],[4]] will run 1 and 3 together and 2 an4 sequentially after 1 and 3 complete
-        and variations on this theme
-        '''       
-        try: 
-            if self._zone_groups is not None:
-                zone_groups = ast.literal_eval(self.hass.states.get(self._zone_groups).state)
+
+# zone grouping defined on the zone as a text variable instead of as a list on the program
+        groups = {}
+        zn = 0
+        for zone in self._zones:
+            zn += 1
+            ''' determine if the zone should run and set run time '''
+            if self._run_zone:
+                z_name  = self._zones[zn-1].get(CONF_NAME)
+                if z_name != self._run_zone:
+                    continue
+            '''should the zone run, rain, frequency ...'''
+            if self._irrigationzones[zn-1].disable_zone_value() == True:
+                continue
+            if not self._triggered_manually:
+                if self._irrigationzones[zn-1].is_raining():
+                    continue
+                z_run_freq = zone.get(ATTR_RUN_FREQ,self._run_freq)
+                if z_run_freq is not None:
+                    if self._irrigationzones[zn-1].should_run() == False:
+                        continue            
+            if zone.get(ATTR_ZONE_GROUP) is not None:
+                zone_group = self.hass.states.get(zone.get(ATTR_ZONE_GROUP)).state
+                if zone_group.strip() != "":
+                    groupkey = "G" + self.hass.states.get(zone.get(ATTR_ZONE_GROUP)).state
+                else:
+                    groupkey = zn
+                if groupkey in groups:
+                  groups[groupkey].append(zn)
+                else:
+                  groups[groupkey] = [zn]
             else:
-                zng= 0
-                zone_groups = []
-                for zone in self._zones:
-                    zng += 1
-                    zone_groups.append([zng])
+                groups[zn] = [zn]
+            zoneremaining = ('zone%s_remaining' % (zn))
+            self._ATTRS [zoneremaining] = format_run_time(self._irrigationzones[zn-1].run_time())
+                                
+        setattr(self, '_state_attributes', self._ATTRS)
+        self.async_schedule_update_ha_state()
+        self.async_write_ha_state()
 
-            ''' initialise zone run time remaining'''
-            for group in zone_groups:
-                for zn in group:
-                    ''' manual run of a zone'''
-                    if self._run_zone:
-                        z_name  = self._zones[zn-1].get(CONF_NAME)
-                        if z_name != self._run_zone:
-                            continue
-                    zoneremaining = ('zone%s_remaining' % (zn))
-                    self._ATTRS [zoneremaining] = format_run_time(self._irrigationzones[zn-1].run_time())
-        except:
-            _LOGGER.error('check zone_groups, must be a list of lists in the format [[1,2],[3,4]]')
-
+        zone_groups = groups.values()
+        _LOGGER.debug('zone_groups %s', zone_groups)
         self._state   = True
-        self._name    = self._program_name
+#        self._name    = self._program_name
         self.async_schedule_update_ha_state()
 
         '''loop through zone_groups'''
@@ -486,20 +505,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             '''start each zone'''
             loop = asyncio.get_event_loop()
             for zn in group:               
-                ''' manual run of a zone, skip all the others'''
-                if self._run_zone:
-                    z_name  = self._zones[zn-1].get(CONF_NAME)
-                    if z_name != self._run_zone:
-                        continue
-                '''should the zone run, rain, frequency ...'''
-                if self._irrigationzones[zn-1].disable_zone_value() == True:
-                    continue
-                if not self._triggered_manually:
-                    if self._irrigationzones[zn-1].is_raining():
-                        continue
-                    if z_run_freq is not None:
-                        if self._irrigationzones[zn-1].should_run() == False:
-                            continue               
                 loop.create_task(self._irrigationzones[zn-1].async_turn_on())
             await asyncio.sleep(1)
 
@@ -510,10 +515,10 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 for zn in group:
                     zoneremaining = ('zone%s_remaining' % (zn))
                     self._ATTRS [zoneremaining] = format_run_time(self._irrigationzones[zn-1].remaining_time())
-                    setattr(self, '_state_attributes', self._ATTRS)
                     '''continue running until all zones have completed'''
                     if self._irrigationzones[zn-1].state() == "on":
                         zns_running = True
+                setattr(self, '_state_attributes', self._ATTRS)
                 self.async_schedule_update_ha_state()
                 self.async_write_ha_state()
                 await asyncio.sleep(1)
@@ -531,7 +536,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 ''' reset the time remaining to 0 '''
                 zoneremaining = ('zone%s_remaining' % (zn))
                 self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
-
                 setattr(self, '_state_attributes', self._ATTRS)
                 result = self.async_schedule_update_ha_state()
 
