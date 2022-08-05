@@ -6,8 +6,8 @@
 * Add zone grouping to allow groups of zones to run concurrently. 
 * Requires Custom Card version 4.0.12
 * Breaking change:
-* Remove ICON attributes
-* Remove allow_multiple option as this is replaced by zone groups.
+* DEPRECATED *icon* attributes
+* DEPRECATED *allow_multiple* option as this is replaced by zone groups.
 
 This release sees the delivery of a **custom card https://github.com/petergridge/irrigation_card** to render the program options specified in the configuration.
 
@@ -71,8 +71,26 @@ The rain sensor can be optionally defined in each zone. You can:
 ### Time or Volume based watering
 You can define a 'flow sensor' that provides a volume/minute rate. eg litres per minute. Once defied the 'water' attribute will be read as volume eg 15 litres not 15 minutes.
 
+This example is for a zone that has been defined with a flow sensor
+```
+            zones:
+              - zone: switch.zone_1
+                name: Lawn
+                water: input_number.irrigation_lawn_water
+                flow_sensor: sensor.irrigation_flow_sensor
+                zone_group: input_text.zone1_group
+```
+
 ### Zone Groups
 You can optionally group zones to run concurrently or sequentially. Inputs are from an input_text helper defined for each zone. Blank groups are treated as sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
+
+```
+            zones:
+              - zone: switch.zone_1
+                name: Lawn
+                water: input_number.irrigation_lawn_water
+                zone_group: input_text.zone1_group
+```
 
 ### Monitor Controller feature
 If this binary sensor is defined it will not execute a schedule if the controller is offline. This is ideal for ESP Home implementations.
@@ -156,6 +174,7 @@ A self contained working sample configuration is provided in the packages direct
         irrigation_on: input_boolean.irrigation_on
         start_time: input_datetime.irrigation_morning_start_time
         run_freq: input_select.irrigation_freq
+        inter_zone_delay: input_number.inter_zone_delay
         zones:
         # Adjust watering time used 
         # Watering time adjusted to water * adjust_watering_time
@@ -253,8 +272,8 @@ irrigationprogram.stop_programs:
 * Add zone grouping to allow groups of zones to run concurrently. 
 * Requires Custom Card version 4.0.12
 * Breaking change:
-* Remove ICON attributes
-* Remove allow_multiple option as this is replaced by zone groups.
+* DEPRECATED *icon* attributes
+* DEPRECATED *allow_multiple* option as this is replaced by zone groups.
 ### 4.0.11
 * Provide an enable_zone option to allow a more intuitive presentation in the Custom Card. Requires Custom Card version 4.0.11
 ### 4.0.10
