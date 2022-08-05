@@ -22,11 +22,11 @@ All the inputs of the platform are Home Assistant entities for example the start
 
 Watering can occur in an Eco mode where a water/wait/repeat cycle is run to minimise run off by letting water soak in using several short watering cycles. The wait and repeat configuration is optional.
 
-The rain sensor is implemented as a binary_sensor, this allows practically any combination of sensors to suspend the irrigation. This can be defined at the zone level to allow for covered ares to continue watering while exposed areas are suspended.
+The rain sensor is implemented as a binary_sensor, this allows practically any combination of sensors to suspend the irrigation. This can be defined at the zone level to allow for covered areas to continue watering while exposed areas are suspended.
 
-Implemented as a switch, you can start a program manually or using an automation. Manually starting a program by turning the switch on will not evaluate the rain sensorany rules it will just run the shedule, as there is an assumption that there is an intent to run the program.
+Implemented as a switch, you can start a program manually or using an automation. Manually starting a program by turning the switch on will not evaluate the rain sensor rules it will just run the shedule, as there is an assumption that there is an intent to run the program.
 
-Only one program can run at a time by default to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped. This can be modified with the allow_multiple attribute to achieve the required outcome you need to set this on each defined program.
+Only one program can run at a time by default to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped.
 
 ## INSTALLATION
 
@@ -72,24 +72,24 @@ The rain sensor can be optionally defined in each zone. You can:
 You can define a 'flow sensor' that provides a volume/minute rate. eg litres per minute. Once defied the 'water' attribute will be read as volume eg 15 litres not 15 minutes.
 
 This example is for a zone that has been defined with a flow sensor
-```
-            zones:
-              - zone: switch.zone_1
-                name: Lawn
-                water: input_number.irrigation_lawn_water
-                flow_sensor: sensor.irrigation_flow_sensor
-                zone_group: input_text.zone1_group
+```yaml
+zones:
+  - zone: switch.zone_1
+    name: Lawn
+    water: input_number.irrigation_lawn_water
+    flow_sensor: sensor.irrigation_flow_sensor
+    zone_group: input_text.zone1_group
 ```
 
 ### Zone Groups
 You can optionally group zones to run concurrently or sequentially. Inputs are from an input_text helper defined for each zone. Blank groups are treated as sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
 
 ```
-            zones:
-              - zone: switch.zone_1
-                name: Lawn
-                water: input_number.irrigation_lawn_water
-                zone_group: input_text.zone1_group
+zones:
+  - zone: switch.zone_1
+    name: Lawn
+    water: input_number.irrigation_lawn_water
+    zone_group: input_text.zone1_group
 ```
 
 ### Monitor Controller feature
@@ -103,7 +103,7 @@ See the **https://github.com/petergridge/openweathremaphistory** for a companion
 Setting *water_adjustment* attribute allows a factor to be applied to the watering time.
 
 * If the factor is 0 no watering will occur
-* If the factor is 0.5 watering will run for only half the configured watering time. Wait and repeat attributes are unaffected.
+* If the factor is 0.5 watering will run for only half the configured watering time/volume. Wait and repeat attributes are unaffected.
 
 The following automation is an example of how the input_number.adjust_run_time could be maintained
 ```yaml
@@ -129,7 +129,7 @@ This can be a specific set of days or the number of days between watering events
 * *Run Freq* allows the water to occur at a specified frequency, for example, every 3 days or only on Monday, Wednesday and Saturday. 
 * *Run Days DEPRECATED*  in this version, if you used this in version 3 simply rename *Run Days* to *Run Freq* to retain the same behaviour.
 
-Defining a selection list to use with the run_freq attribute.
+Defining a selection list to use with the run_freq attribute, remove the options you don't want to use.
 ```yaml
 input_select:
   irrigation_freq:
