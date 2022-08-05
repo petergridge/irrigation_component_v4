@@ -1,6 +1,13 @@
 
 # Irrigation Component V4 <img src="https://github.com/petergridge/irrigation_component_v4/blob/main/icon.png" alt="drawing" width="75"/>
 
+### Latest Changes V4.0.12
+* Add inter zone delay to provide a delay between zones starting.
+* Add zone grouping to allow groups of zones to run concurrently. 
+* Requires Custom Card version 4.0.12
+* Breaking change:
+* Remove ICON attributes
+* Remove allow_multiple option as this is replaced by zone groups.
 
 This release sees the delivery of a **custom card https://github.com/petergridge/irrigation_card** to render the program options specified in the configuration.
 
@@ -65,13 +72,7 @@ The rain sensor can be optionally defined in each zone. You can:
 You can define a 'flow sensor' that provides a volume/minute rate. eg litres per minute. Once defied the 'water' attribute will be read as volume eg 15 litres not 15 minutes.
 
 ### Zone Groups
-You can optionally group zones to run concurrently or sequentially by providing a structured list of how you would like them to behave. Multiple options can be provided in a input select helper so the grouping can change as the seasons do. 
-
-The format of the list needs to be very specific and while not elegant from a UI perspective it provides the funtionality, this may be improved in future releases.
-For example if you have four zones:
-* to run all zones sequentially - [[1],[2],[3],[4]]
-* to run zone one and two concurrently and 3 and 4 sequentially - [[1,2],[3],[4]]
-* to run one, two and three concurrently and then four - [[1,2,3],[4]]
+You can optionally group zones to run concurrently or sequentially. Inputs are from an input_text helper defined for each zone. Blank groups are treated as sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
 
 ### Monitor Controller feature
 If this binary sensor is defined it will not execute a schedule if the controller is offline. This is ideal for ESP Home implementations.
@@ -205,8 +206,6 @@ A self contained working sample configuration is provided in the packages direct
 *(binary_sensor)(optional)* Detect if the irrigation controller is online. Autoated schedule will not execute if offline.
 >#### irrigation_on
 *(input_boolean)(Optional)* Attribute to temporarily disable the watering schedule
->#### zone_groups
-*(inout_select)(Optional)* Allow multiple zones to be active at the same time input must be in the format [[1,2],[3,4]] this will run zones 1 and 2 simultaneously and then zones 3 and 4. to run all four zones sequentially the format is [[1],[2],[3],[4]].
 >#### inter_zone_delay
 *(inout_number)(Optional)* Delays the start of each zone by the specified number of seconds.
 >#### unique_id
@@ -223,6 +222,8 @@ A self contained working sample configuration is provided in the packages direct
 *(binary_sensor)(Optional)* A binary sensor - True or On will prevent the irrigation starting. e.g. rain sensor, greenhouse moisture sensor or template sensor that checks the weather
 >>#### ignore_rain_sensor
 *(input_boolean)(Optional)* Attribute to allow the zone to run regardless of the state of the rain sensor. Useful for a greenhouse zone that never gets rain.
+>>#### zone_groups
+*(inout_select)(Optional)* Allow multiple zones to be active at the same time. Inputs are from an input_text helper. Blank groups are treated as sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
 >>#### water
 *(input_number)(Required)* This it the period that the zone will turn the switch_entity on for.
 >>#### water
