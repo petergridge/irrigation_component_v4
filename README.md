@@ -209,7 +209,7 @@ A self contained working sample configuration is provided in the packages direct
             water: input_number.irrigation_lawn_run
 ```
 ## CONFIGURATION VARIABLES
-|Program|                  |                  |               |        |                                                                         |
+|program|                  |                  |               |        |                                                                         |
 |-------|------------------|------------------|---------------|--------|------------------------------------------------------------------------|
 |       |name              |                  |string         |Optional|Display name for the irrigation program switch                          |
 |       |show_config       |                  |input_boolean  |Optional|Attribute to support hiding the configuration detail in the custom card |
