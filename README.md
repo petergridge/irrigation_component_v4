@@ -182,13 +182,13 @@ A self contained working sample configuration is provided in the packages direct
             water_adjustment: input_number.adjust_run_time
             wait: input_number.irrigation_pot_plants_wait
             repeat: input_number.irrigation_pot_plants_repeat
-            zone_group: input_text.zone_group1
+            zone_group: input_text.zone1_group
             enable_zone: input_boolean.enable_zone1
         # No rain sensor defined, will always water to the schedule
           - zone: switch.irrigation_solenoid_03
             name: Greenhouse
             water: input_number.irrigation_greenhouse_run
-            zone_group: input_text.zone_group2
+            zone_group: input_text.zone2_group
             enable_zone: input_boolean.enable_zone2
         # Rain sensor used, watering time only
           - zone: switch.irrigation_solenoid_02
@@ -196,7 +196,7 @@ A self contained working sample configuration is provided in the packages direct
             water: input_number.irrigation_lawn_run
             rain_sensor: binary_sensor.irrigation_rain_sensor
             ignore_rain_sensor: switch.ignore_rain_sensor
-            zone_group: input_text.zone_group3
+            zone_group: input_text.zone3_group
             enable_zone: input_boolean.enable_zone3
 
     # minimal configuration, will run everyday at the time specified
