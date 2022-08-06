@@ -12,12 +12,16 @@ This release sees the delivery of a **custom card https://github.com/petergridge
 
 The driver for this project is to provide an easy to configure user interface for the gardener of the house. The goal is that once the inital configuration is done all the features can be modified using the custom lovelace card.
 
+This program is essentially a scheduling tool, one user has also used this to schedule the running of his lawn mower, so the use is far broader than I anticipated.
+
 The provided working test harness is self contained with dummy switches and rain sensor that can be used to become familiar with the capabilities of the component.
 
 ![irrigation|690x469,50%](irrigation1.JPG) 
 **Image 1:** All attributes rendered using the companion custom card
 
-All the inputs of the platform are Home Assistant helpers for example the start time is provided via a input_datetime. The information is evaluated to trigger the irrigation action according to the inputs provided.
+All the inputs of the platform are Home Assistant helpers for example the start time is provided via a input_datetime. 
+
+The information provided by the configuraton is evaluated to trigger the irrigation action according to the inputs provided.
 
 Watering can occur in an ECO mode where a water/wait/repeat cycle is run to minimise run off by letting water soak in using several short watering cycles. The wait and repeat configuration is optional.
 
@@ -212,26 +216,26 @@ A self contained working sample configuration is provided in the packages direct
             water: input_number.irrigation_lawn_run
 ```
 ## CONFIGURATION VARIABLES
-|Attribute       |Type|Mandatory|Description|
-|:---            |:---|:---    |:---       |
-|program                  |string         |Required|Name of the switch, exposed as switch.program                   |
-|&nbsp;&nbsp;&nbsp;&nbsp;start_time|input_datetime |Required|The local time for the program to start                                 |
-|&nbsp;&nbsp;&nbsp;&nbsp;name|string|Optional|Display name for the irrigation program switch                          |
+|Attribute       |Type   |Mandatory|Description|
+|:---            |:---   |:---     |:---       |
+|program         |string |Required |Name of the switch, exposed as switch.program|
+|&nbsp;&nbsp;&nbsp;&nbsp;start_time|input_datetime |Required|The local time for the program to start|
+|&nbsp;&nbsp;&nbsp;&nbsp;name|string|Optional|Display name for the irrigation program switch|
 |&nbsp;&nbsp;&nbsp;&nbsp;show_config|input_boolean|Optional|Attribute to support hiding the configuration detail in the custom card |
 |&nbsp;&nbsp;&nbsp;&nbsp;[run_freq](#run-days-and-run-frequency)|input_select   |Optional|Indicate how often to run. If not provided will run every day|
-|&nbsp;&nbsp;&nbsp;&nbsp;[controller_monitor](#monitor-controller-feature)|binary_sensor  |Optional|Detect if the irrigation controller is online. Schedule will not execute if offline.|
+|&nbsp;&nbsp;&nbsp;&nbsp;[controller_monitor](#monitor-controller-feature)|binary_sensor  |Optional|Detect if the irrigation controller is online. Schedule will not execute if offline|
 |&nbsp;&nbsp;&nbsp;&nbsp;irrigation_on|input_boolean  |Optional|Attribute to temporarily disable the watering schedule|
 |&nbsp;&nbsp;&nbsp;&nbsp;inter_zone_delay|input_number   |Optional|Delays the start of each zone by the specified number of seconds|
 |&nbsp;&nbsp;&nbsp;&nbsp;zones|list|Required|List of zones to run|
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zone|switch|Required|This is the switch that represents the solenoid to be triggered|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;zone|switch|Required|This is the switch that represents the solenoid to be triggered|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name|string|Required|This is the name displayed when the zone is active|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;water|input_number|Required|The period that the zone will turn the switch_entity on for|
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[water_adjustment](#water-adjustment-feature)|sensor, input_number|Optional|A factor,applied to the watering time to decrease or increase the watering time
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[water_adjustment](#water-adjustment-feature)|sensor, input_number|Optional|A factor,applied to the watering time to decrease or increase the watering time|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[wait](#eco-feature)|input_number|Optional|Wait time of the water/wait/repeat ECO option|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[repeat](#eco-feature)|input_number|Optional|The number of cycles to run water/wait/repeat|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[flow_sensor](#time-or-volume-based-watering)|sensor|Optional|Provides flow rate per minute. The water value will now be assessed as volume|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[rain_sensor](#rain-sensor-feature)|binary_sensor  |Optional|True or On will prevent the irrigation starting|
-|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ignore_rain_sensor|input_boolean  |Optional|Attribute to allow the zone to run regardless of the state of the rain sensor|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ignore_rain_sensor|input_boolean|Optional|Attribute to allow the zone to run regardless of the state of the rain sensor|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[zone_group](#zone-group)|input_select, input_text|Optional|Allow multiple zones to be active at the same time|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[run_freq](#run-days-and-run-frequency)|input_select|Optional|Indicate how often to run. If not provided will run every day|
 |&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;enable_zone|input_boolean|Optional|Disable a zone, preventing it from running in either manual or scheduled executions|
