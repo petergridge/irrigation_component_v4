@@ -81,7 +81,7 @@ zones:
 ```
 
 ### Zone Group
-You can optionally group zones to run concurrently or sequentially. Inputs are from an input_text or input_select helper defined for each zone. Blank groups are treated as sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
+You can optionally group zones to run concurrently or sequentially. Inputs are from an input_text or input_select helper defined for each zone. Blank groups or where a zone_group is not defined will be sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
 
 ```
 zones:
@@ -175,7 +175,6 @@ A self contained working sample configuration is provided in the packages direct
         run_freq: input_select.irrigation_freq
         inter_zone_delay: input_number.inter_zone_delay
         zones:
-        # Adjust watering time used 
         # Watering time adjusted to water * adjust_watering_time
           - zone: switch.irrigation_solenoid_01
             name: Pot Plants
@@ -183,18 +182,22 @@ A self contained working sample configuration is provided in the packages direct
             water_adjustment: input_number.adjust_run_time
             wait: input_number.irrigation_pot_plants_wait
             repeat: input_number.irrigation_pot_plants_repeat
+            zone_group: input_text.zone_group1
+            enable_zone: input_boolean.enable_zone1
         # No rain sensor defined, will always water to the schedule
           - zone: switch.irrigation_solenoid_03
             name: Greenhouse
             water: input_number.irrigation_greenhouse_run
-            wait: input_number.irrigation_greenhouse_wait
-            repeat: input_number.irrigation_greenhouse_repeat
+            zone_group: input_text.zone_group2
+            enable_zone: input_boolean.enable_zone2
         # Rain sensor used, watering time only
           - zone: switch.irrigation_solenoid_02
             name: Front Lawn
             water: input_number.irrigation_lawn_run
             rain_sensor: binary_sensor.irrigation_rain_sensor
             ignore_rain_sensor: switch.ignore_rain_sensor
+            zone_group: input_text.zone_group3
+            enable_zone: input_boolean.enable_zone3
 
     # minimal configuration, will run everyday at the time specified
       afternoon:
