@@ -225,7 +225,7 @@ A self contained working sample configuration is provided in the packages direct
 |         |                   | flow_sensor       |sensor         |Optional|Provides the flow rate per minute. If the provided the water value will be assessed as volume|
 |         |                   | rain_sensor       |binary_sensor  |Optional|True or On will prevent the irrigation starting. e.g. rain sensor, greenhouse moisture sensor or template sensor that checks the weather|
 |         |                   | ignore_rain_sensor|input_boolean  |Optional|Attribute to allow the zone to run regardless of the state of the rain sensor. Useful for a greenhouse zone that never gets rain|
-|         |                   | zone_group        |input_select/input_text|Optional|Allow multiple zones to be active at the same time|
+|         |                   | zone_group        |input_select, input_text|Optional|Allow multiple zones to be active at the same time|
 |         |                   | water             |input_number   |Required|The period that the zone will turn the switch_entity on for|
 |         |                   | water_adjustment  |sensor         |Optional|A factor to apply to the watering time that can be used as an alternative to using a rain sensor. The watering time will be multiplied by this factor to adjust the run time of the zone
 |         |                   | wait              |input_number   |Optional|This provides for an Eco capability implementing a cycle of water/wait/repeat to allow water to soak into the soil|
