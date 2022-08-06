@@ -17,15 +17,15 @@ The provided working test harness is self contained with dummy switches and rain
 ![irrigation|690x469,50%](irrigation1.JPG) 
 **Image 1:** All attributes rendered using the companion custom card
 
-All the inputs of the platform are Home Assistant entities for example the start time is provided via a input_datetime entity. The information is evaluated to trigger the irrigation action according to the inputs provided.
+All the inputs of the platform are Home Assistant helpers for example the start time is provided via a input_datetime. The information is evaluated to trigger the irrigation action according to the inputs provided.
 
 Watering can occur in an ECO mode where a water/wait/repeat cycle is run to minimise run off by letting water soak in using several short watering cycles. The wait and repeat configuration is optional.
 
 The rain sensor is implemented as a binary_sensor, this allows practically any combination of sensors to suspend the irrigation. This can be defined at the zone level to allow for covered areas to continue watering while exposed areas are suspended.
 
-Implemented as a switch, you can start a program manually or using an automation. Manually starting a program by turning the switch on will not evaluate the rain sensor rules it will just run the shedule, as there is an assumption that there is an intent to run the program.
+Implemented as a switch, you can start a program using the schedule, manually or using an automation. Manually starting a program by turning the switch on will not evaluate the rain sensor rules it will just run the program, as there is an assumption that there is an intent to run the program regardless of sensors.
 
-Only one program can run at a time by default to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped.
+Only one program can run at a time by default to prevent multiple solenoids being activated. If program start times result in an overlap the running program will be stopped. Zones can be configured to run concurrently or sequentially.
 
 ## INSTALLATION
 
@@ -97,12 +97,13 @@ If this binary sensor is defined it will not execute a schedule if the controlle
 ### Watering Adjuster feature
 As an alternative to the rain sensor you can also use the watering adjustment. With this feature the integrator is responsible to provide the value using a input_number component. I imagine that this would be based on weather data or a moisture sensor.
 
-See the **https://github.com/petergridge/openweathremaphistory** for a companion custom comsensor that may be useful.
+See the **https://github.com/petergridge/openweathremaphistory** for a companion custom sensor that may be useful.
 
 Setting *water_adjustment* attribute allows a factor to be applied to the watering time.
 
 * If the factor is 0 no watering will occur
 * If the factor is 0.5 watering will run for only half the configured watering time/volume. Wait and repeat attributes are unaffected.
+* A factor of 1.1 could also be used to apply 10% more water if required.
 
 The following automation is an example of how the input_number.adjust_run_time could be maintained
 ```yaml
@@ -208,29 +209,29 @@ A self contained working sample configuration is provided in the packages direct
             water: input_number.irrigation_lawn_run
 ```
 ## CONFIGURATION VARIABLES
-|      ||                 |Type|Required|Description|
-|-------|------------------|:---|:---|:--|:---|
-|program|                  |                  |string         |Required|Name of the switch, exposed as switch.program                   |
-|       |name              |                  |string         |Optional|Display name for the irrigation program switch                          |
-|       |show_config       |                  |input_boolean  |Optional|Attribute to support hiding the configuration detail in the custom card |
-|       |start_time        |                  |input_datetime |Required|The local time for the program to start                                 |
-|       |[run_freq](#run-days-and-run-frequency)|     |input_select   |Optional|Indicate how often to run. If not provided will run every day|
-|    |[controller_monitor](#monitor-controller-feature)||binary_sensor  |Optional|Detect if the irrigation controller is online. Schedule will not execute if offline.|
-|       |irrigation_on     |                  |input_boolean  |Optional|Attribute to temporarily disable the watering schedule|
-|       |inter_zone_delay  |                  |input_number   |Optional|Delays the start of each zone by the specified number of seconds|
-|       |zones             |                  |list           |Required|List of zones to run|
-|       |                  |zone              |switch         |Required|This is the switch that represents the solenoid to be triggered|
-|       |                  |name              |string         |Required|This is the name displayed when the zone is active|
-|       |             |[flow_sensor](#time-or-volume-based-watering)|sensor|Optional|Provides flow rate per minute. The water value will now be assessed as volume|
-|       |                  |[rain_sensor](#rain-sensor-feature)|binary_sensor  |Optional|True or On will prevent the irrigation starting|
-|       |                  |ignore_rain_sensor|input_boolean  |Optional|Attribute to allow the zone to run regardless of the state of the rain sensor|
-|       |                  |[zone_group](#zone-group)|input_select, input_text|Optional|Allow multiple zones to be active at the same time|
-|       |                  |water             |input_number   |Required|The period that the zone will turn the switch_entity on for|
-|       |  |[water_adjustment](#water-adjustment-feature)|sensor, input_number|Optional|A factor,applied to the watering time to decrease or increase the watering time
-|       |                  |[wait](#eco-feature)|input_number   |Optional|Wait time of the water/wait/repeat ECO option|
-|       |                  |[repeat](#eco-feature)|input_number   |Optional|The number of cycles to run water/wait/repeat|
-|       |                  |[run_freq](#run-days-and-run-frequency)|input_select   |Optional|Indicate how often to run. If not provided will run every day|
-|       |                  |enable_zone       |input_boolean  |Optional|Disable a zone, preventing it from running in either manual or scheduled executions|
+|Attribute       |Type|Mandatory|Description|
+|:---            |:---|:---    |:---       |
+|program                  |string         |Required|Name of the switch, exposed as switch.program                   |
+|&nbsp;&nbsp;&nbsp;&nbsp;start_time|input_datetime |Required|The local time for the program to start                                 |
+|&nbsp;&nbsp;&nbsp;&nbsp;name|string|Optional|Display name for the irrigation program switch                          |
+|&nbsp;&nbsp;&nbsp;&nbsp;show_config|input_boolean|Optional|Attribute to support hiding the configuration detail in the custom card |
+|&nbsp;&nbsp;&nbsp;&nbsp;[run_freq](#run-days-and-run-frequency)|input_select   |Optional|Indicate how often to run. If not provided will run every day|
+|&nbsp;&nbsp;&nbsp;&nbsp;[controller_monitor](#monitor-controller-feature)|binary_sensor  |Optional|Detect if the irrigation controller is online. Schedule will not execute if offline.|
+|&nbsp;&nbsp;&nbsp;&nbsp;irrigation_on|input_boolean  |Optional|Attribute to temporarily disable the watering schedule|
+|&nbsp;&nbsp;&nbsp;&nbsp;inter_zone_delay|input_number   |Optional|Delays the start of each zone by the specified number of seconds|
+|&nbsp;&nbsp;&nbsp;&nbsp;zones|list|Required|List of zones to run|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zone|switch|Required|This is the switch that represents the solenoid to be triggered|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name|string|Required|This is the name displayed when the zone is active|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;water|input_number|Required|The period that the zone will turn the switch_entity on for|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[water_adjustment](#water-adjustment-feature)|sensor, input_number|Optional|A factor,applied to the watering time to decrease or increase the watering time
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[wait](#eco-feature)|input_number|Optional|Wait time of the water/wait/repeat ECO option|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[repeat](#eco-feature)|input_number|Optional|The number of cycles to run water/wait/repeat|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[flow_sensor](#time-or-volume-based-watering)|sensor|Optional|Provides flow rate per minute. The water value will now be assessed as volume|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[rain_sensor](#rain-sensor-feature)|binary_sensor  |Optional|True or On will prevent the irrigation starting|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ignore_rain_sensor|input_boolean  |Optional|Attribute to allow the zone to run regardless of the state of the rain sensor|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[zone_group](#zone-group)|input_select, input_text|Optional|Allow multiple zones to be active at the same time|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[run_freq](#run-days-and-run-frequency)|input_select|Optional|Indicate how often to run. If not provided will run every day|
+|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;enable_zone|input_boolean|Optional|Disable a zone, preventing it from running in either manual or scheduled executions|
 
 ## SERVICES
 ```yaml
