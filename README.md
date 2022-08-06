@@ -1,4 +1,3 @@
-
 # Irrigation Component V4 <img src="https://github.com/petergridge/irrigation_component_v4/blob/main/icon.png" alt="drawing" width="75"/>
 
 ### Latest Changes V4.0.12
@@ -81,8 +80,8 @@ zones:
     zone_group: input_text.zone1_group
 ```
 
-### Zone Groups
-You can optionally group zones to run concurrently or sequentially. Inputs are from an input_text helper defined for each zone. Blank groups are treated as sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
+### Zone Group
+You can optionally group zones to run concurrently or sequentially. Inputs are from an input_text or input_select helper defined for each zone. Blank groups are treated as sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
 
 ```
 zones:
@@ -210,55 +209,30 @@ A self contained working sample configuration is provided in the packages direct
             water: input_number.irrigation_lawn_run
 ```
 ## CONFIGURATION VARIABLES
-
-## program
-*(string)(Required)* the switch entity.
->#### name
-*(string)(Optional)* display name for the irrigation program switch.
->#### show_config
-*(input_boolean)(Optional)* Attribute to support hiding the configuration detail in the custom card
->#### start_time
-*(input_datetime)(Required)* the local time for the program to start.
->#### run_freq 
-*(input_select)(optional)* Indicate how often to run. If not provided will run every day.
->#### controller_monitor 
-*(binary_sensor)(optional)* Detect if the irrigation controller is online. Autoated schedule will not execute if offline.
->#### irrigation_on
-*(input_boolean)(Optional)* Attribute to temporarily disable the watering schedule
->#### inter_zone_delay
-*(inout_number)(Optional)* Delays the start of each zone by the specified number of seconds.
->#### unique_id
-*(string)(Optional)* An ID that uniquely identifies this switch. Set this to an unique value to allow customisation trough the UI.
->#### Zones 
-*(list)(Required)* The list of zones to water.
->>#### zone
-*(entity)(Required)* This is the switch that represents the solenoid to be triggered.
->>#### name
-*(string)(Required)* This is the name displayed when the zone is active.
->>#### flow_sensor
-*(string)(Optional)* A sensor entity that provides the flow rate per minute. If the provided the water value will be assessed as volume.
->>#### rain_sensor
-*(binary_sensor)(Optional)* A binary sensor - True or On will prevent the irrigation starting. e.g. rain sensor, greenhouse moisture sensor or template sensor that checks the weather
->>#### ignore_rain_sensor
-*(input_boolean)(Optional)* Attribute to allow the zone to run regardless of the state of the rain sensor. Useful for a greenhouse zone that never gets rain.
->>#### zone_groups
-*(inout_select)(Optional)* Allow multiple zones to be active at the same time. Inputs are from an input_text helper. Blank groups are treated as sequential zones. Zones are grouped by having the same text value, for example each zone with a value of 'A' will run concurrently.
->>#### water
-*(input_number)(Required)* This it the period that the zone will turn the switch_entity on for.
->>#### water
-*(input_number)(Required)* This it the period that the zone will turn the switch_entity on for.
->>#### water_adjustment
-*(input_number)(Optional)* This is a factor to apply to the watering time that can be used as an alternative to using a rain sensor. The watering time will be multiplied by this factor to adjust the run time of the zone.
->>#### wait
-*(input_number)(Optional)* This provides for an Eco capability implementing a cycle of water/wait/repeat to allow water to soak into the soil.
->>#### repeat
-*(input_number)(Optional)* This is the number of cycles to run water/wait/repeat.
->>#### run_freq 
-*(input_select)(optional)* Indicate how often to run. If not provided will run every day.
->> #### disable_zone
-*(input_boolean)(Optional)* This will disable a zone, preventing it from running in either manual or program executions.
->> #### enable_zone
-*(input_boolean)(Optional)* This is the inverse of disable zone and will disable a zone, preventing it from running in either manual or program executions. I recommend using this option as I would like to depricate the disable_zone option.
+| Program |                   |                   |               |        |                                                                         |
+|---------|-------------------|-------------------|---------------|--------|------------------------------------------------------------------------|
+|         | name              |                   |string         |Optional|Display name for the irrigation program switch                          |
+|         | show_config       |                   |input_boolean  |Optional|Attribute to support hiding the configuration detail in the custom card |
+|         | start_time        |                   |input_datetime |Required|The local time for the program to start                                 |
+|         | run_freq          |                   |input_select   |Optional|Indicate how often to run. If not provided will run every day|
+|         | controller_monitor|                   |binary_sensor  |Optional|Detect if the irrigation controller is online. Autoated schedule will not execute if offline.|
+|         | irrigation_on     |                   |input_boolean  |Optional|Attribute to temporarily disable the watering schedule|
+|         | inter_zone_delay  |                   |input_number   |Optional|Delays the start of each zone by the specified number of seconds|
+|         | unique_id         |                   |string         |Optional|An ID that uniquely identifies this switch. Set this to an unique value to allow customisation trough the UI|
+|         | zones             |                   |list           |Required|List of zones to run|
+|         |                   | zone              |switch         |Required|This is the switch that represents the solenoid to be triggered|
+|         |                   | name              |string         |Required|This is the name displayed when the zone is active|
+|         |                   | flow_sensor       |sensor         |Optional|Provides the flow rate per minute. If the provided the water value will be assessed as volume|
+|         |                   | rain_sensor       |binary_sensor  |Optional|True or On will prevent the irrigation starting. e.g. rain sensor, greenhouse moisture sensor or template sensor that checks the weather|
+|         |                   | ignore_rain_sensor|input_boolean  |Optional|Attribute to allow the zone to run regardless of the state of the rain sensor. Useful for a greenhouse zone that never gets rain|
+|         |                   | zone_group        |input_select/input_text|Optional|Allow multiple zones to be active at the same time|
+|         |                   | water             |input_number   |Required|The period that the zone will turn the switch_entity on for|
+|         |                   | water_adjustment  |sensor         |Optional|A factor to apply to the watering time that can be used as an alternative to using a rain sensor. The watering time will be multiplied by this factor to adjust the run time of the zone
+|         |                   | wait              |input_number   |Optional|This provides for an Eco capability implementing a cycle of water/wait/repeat to allow water to soak into the soil|
+|         |                   | repeat            |input_number   |Optional|The number of cycles to run water/wait/repeat|
+|         |                   | run_freq          |input_select   |Optional|Indicate how often to run. If not provided will run every day|
+|         |                   | disable_zone      |input_boolean  |Optional|Disable a zone, preventing it from running in either manual or program executions|
+|         |                   | enable_zone       |input_boolean  |Optional|The inverse of disable_zone and will disable a zone, preventing it from running in either manual or program executions|
 
 ## SERVICES
 ```yaml
