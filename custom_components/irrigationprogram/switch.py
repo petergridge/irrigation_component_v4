@@ -1,4 +1,6 @@
 from .irrigationzone import irrigationzone
+from .pump import pumpclass
+
 import logging
 import asyncio
 import voluptuous as vol
@@ -24,21 +26,17 @@ from homeassistant.components.switch import (
 )
 
 from .const import (
-#    DOMAIN,
     ATTR_START,
     ATTR_HIDE_CONFIG,
     ATTR_RUN_FREQ,
-#    ATTR_RUN_DAYS,
     ATTR_IRRIGATION_ON,
     ATTR_RAIN_SENSOR,
-#    ATTR_IGNORE_RAIN_BOOL,
     CONST_SWITCH,
     ATTR_IGNORE_RAIN_SENSOR,
     ATTR_DISABLE_ZONE,
     ATTR_ENABLE_ZONE, #enable the zone even if raining
     ATTR_ZONES,
     ATTR_ZONE,
-#    ATTR_ZONE_GROUPS,
     ATTR_ZONE_GROUP,
     ATTR_PUMP,
     ATTR_FLOW_SENSOR,
@@ -50,23 +48,17 @@ from .const import (
     ATTR_REMAINING,
     ATTR_LAST_RAN,
     ATTR_MONITOR_CONTROLLER,
-#    ATTR_MULTIPLE,
     ATTR_RESET,
 )
 
 from homeassistant.const import (
     EVENT_HOMEASSISTANT_START,
-#    ATTR_ENTITY_ID,
     CONF_SWITCHES,
     CONF_UNIQUE_ID,
     CONF_NAME,
     SERVICE_TURN_OFF,
     SERVICE_TURN_ON,
-#    ATTR_ICON,
-#    MATCH_ALL,
 )
-
-# breaking change - remove ICON attibutes
 
 SWITCH_SCHEMA = vol.All(
     vol.Schema(
@@ -78,10 +70,7 @@ SWITCH_SCHEMA = vol.All(
         vol.Optional(ATTR_HIDE_CONFIG): cv.entity_domain('input_boolean'),
         vol.Optional(ATTR_MONITOR_CONTROLLER): cv.entity_domain('binary_sensor'),
         vol.Optional(ATTR_DELAY): cv.entity_domain('input_number'),
-#        vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
-#        vol.Optional(ATTR_MULTIPLE,default=False): cv.boolean,
         vol.Optional(ATTR_RESET,default=False): cv.boolean,
-#        vol.Optional(ATTR_ZONE_GROUPS): cv.entity_domain('input_select'),
         vol.Required(ATTR_ZONES): [{
             vol.Required(ATTR_ZONE, 'zone'): cv.entity_domain(CONST_SWITCH),
             vol.Optional(ATTR_PUMP, 'pump'): cv.entity_domain(CONST_SWITCH),
@@ -97,7 +86,6 @@ SWITCH_SCHEMA = vol.All(
             vol.Optional(ATTR_IGNORE_RAIN_SENSOR): vol.All(vol.Any(cv.entity_domain('input_boolean'),cv.boolean)),
             vol.Optional(ATTR_DISABLE_ZONE): vol.All(vol.Any(cv.entity_domain('input_boolean'),cv.boolean)),
             vol.Optional(ATTR_ENABLE_ZONE): vol.All(vol.Any(cv.entity_domain('input_boolean'),cv.boolean)),
-#            vol.Optional(ATTR_ICON,default=DFLT_ICON): cv.icon,
         }],
         vol.Optional(CONF_UNIQUE_ID): cv.string,
         }
@@ -121,13 +109,11 @@ async def _async_create_entities(hass, config):
         hide_config             = device_config.get(ATTR_HIDE_CONFIG)
         run_freq                = device_config.get(ATTR_RUN_FREQ)
         irrigation_on           = device_config.get(ATTR_IRRIGATION_ON)
-#        multiple                = device_config.get(ATTR_MULTIPLE)
         reset                   = device_config.get(ATTR_RESET)
         zones                   = device_config.get(ATTR_ZONES)
         unique_id               = device_config.get(CONF_UNIQUE_ID)
         monitor_controller      = device_config.get(ATTR_MONITOR_CONTROLLER)
         inter_zone_delay        = device_config.get(ATTR_DELAY)
-#        zone_groups             = device_config.get(ATTR_ZONE_GROUPS)
 
         switches.append(
             IrrigationProgram(
@@ -140,8 +126,6 @@ async def _async_create_entities(hass, config):
                 irrigation_on,
                 monitor_controller,
                 inter_zone_delay,
-#                zone_groups,
-#                multiple,
                 reset,
                 zones,
                 unique_id,
@@ -179,8 +163,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         irrigation_on,
         monitor_controller,
         inter_zone_delay,
-#        zone_groups,
-#        multiple,
         reset,
         zones,
         unique_id,
@@ -199,7 +181,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         self._irrigation_on      = irrigation_on
         self._monitor_controller = monitor_controller
         self._inter_zone_delay   = inter_zone_delay 
-#        self._zone_groups        = zone_groups
         self._zones              = zones
         self._state_attributes   = None
         self._state              = False
@@ -209,9 +190,9 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
         self._last_run           = None
         self._triggered_manually = True
         self._template           = None
-#        self._allow_multiple_zones = multiple
         self._reset_last_ran     = reset
         self._irrigationzones    = []
+        self._pumps              = []
         self._run_zone           = None
         ''' Validate and Build a template from the attributes provided '''
 
@@ -269,17 +250,21 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             self._ATTRS [ATTR_MONITOR_CONTROLLER] = self._monitor_controller
         if self._inter_zone_delay is not None:
             self._ATTRS [ATTR_DELAY] = self._inter_zone_delay
-#        if self._zone_groups is not None:
-#            self._ATTRS [ATTR_ZONE_GROUPS] = self._zone_groups
 
         ''' zone loop to set the attributes '''
-#        self._total_runtime = 0
         zn = 0
-
+        pumps = {}
         for zone in self._zones:
             zn += 1
 
             self._irrigationzones.append (irrigationzone(self.hass, zone,self._run_freq))
+            '''create pump - zone list '''
+#            _LOGGER.error('zone: %s',zone.get(ATTR_ZONE))
+            if zone.get(ATTR_PUMP) is not None:
+                if zone.get(ATTR_PUMP) not in pumps:
+                    pumps[zone.get(ATTR_PUMP)] = [zone.get(ATTR_ZONE)]
+                else:
+                    pumps[zone.get(ATTR_PUMP)].append(zone.get(ATTR_ZONE))
 
             ''' check if the zone name has changed or is new and reset last run time '''
             a = ('zone%s_%s' % (zn, CONF_NAME))
@@ -337,6 +322,14 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
         self._ATTRS ['zone_count'] = zn
         setattr(self, '_state_attributes', self._ATTRS)
+        ''' create pump class to start/stop pumps '''
+        for thispump in pumps:
+            self._pumps.append (pumpclass(self.hass, thispump, pumps[thispump]))
+        ''' start pump monitoring '''
+
+        loop = asyncio.get_event_loop()
+        for thispump in self._pumps:
+            loop.create_task(thispump.async_monitor())
 
         ''' house keeping to help ensure solenoids are in a safe state '''
         self.hass.bus.async_listen_once(

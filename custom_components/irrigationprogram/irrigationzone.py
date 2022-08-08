@@ -281,8 +281,6 @@ class irrigationzone:
         self._remaining_time = self.run_time()
         ''' run the watering cycle, water/wait/repeat '''
         SOLENOID = {ATTR_ENTITY_ID: self._switch}
-        if self._pump is not None:
-            PUMP = {ATTR_ENTITY_ID: self._pump}
         for i in range(z_repeat, 0, -1):
             if self._stop == True:
                 break
@@ -292,16 +290,11 @@ class irrigationzone:
                 await self.hass.services.async_call(CONST_SWITCH,
                                                     SERVICE_TURN_ON,
                                                     SOLENOID)
-                if self._pump is not None:
-                    await self.hass.services.async_call(CONST_SWITCH,
-                                                    SERVICE_TURN_ON,
-                                                    PUMP)
 
             if self._flow_sensor is not None:
                 ''' calculate the remaining volume '''
                 water = z_water
                 while water > 0:
-                    #self._remaining_time -= self.flow_sensor_value()/(60/step)
                     water -= self.flow_sensor_value()/(60/step)
                     self._remaining_time = water/self.flow_sensor_value()*60
                     if self._remaining_time < 0:
@@ -325,10 +318,6 @@ class irrigationzone:
                     await self.hass.services.async_call(CONST_SWITCH,
                                                         SERVICE_TURN_OFF,
                                                         SOLENOID)
-                    if self._pump is not None:
-                        await self.hass.services.async_call(CONST_SWITCH,
-                                                            SERVICE_TURN_OFF,
-                                                            PUMP)
                 wait = z_wait * 60
                 for w in range(0,wait, step):
                     if self._flow_sensor is None:
@@ -346,10 +335,6 @@ class irrigationzone:
                     await self.hass.services.async_call(CONST_SWITCH,
                                                         SERVICE_TURN_OFF,
                                                         SOLENOID)
-                    if self._pump is not None:
-                        await self.hass.services.async_call(CONST_SWITCH,
-                                                            SERVICE_TURN_OFF,
-                                                            PUMP)
         ''' End of repeat loop '''
         self._state = 'off'
  
@@ -366,11 +351,6 @@ class irrigationzone:
         await self.hass.services.async_call(CONST_SWITCH,
                                             SERVICE_TURN_OFF,
                                             SOLENOID)
-        if self._pump is not None:
-            PUMP = {ATTR_ENTITY_ID: self._pump}
-            await self.hass.services.async_call(CONST_SWITCH,
-                                                SERVICE_TURN_OFF,
-                                                PUMP)
 
     def set_last_ran(self, p_last_ran):
         if p_last_ran is None:
