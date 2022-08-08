@@ -247,6 +247,8 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.13
+* Group execution fix.
 ### 4.0.12
 * Add inter zone delay to provide a delay between zones starting.
 * Add zone grouping to allow groups of zones to run concurrently. 
