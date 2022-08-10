@@ -297,7 +297,7 @@ class irrigationzone:
                     water -= self.flow_sensor_value()/60
                     remaining_cycle = water/self.flow_sensor_value()*60
                     full_cycle = z_water/self.flow_sensor_value()*60
-                    self._remaining_time = remaining_cycle + ((full_cycle + (z_wait*60*i))-(z_wait*60)
+                    self._remaining_time = remaining_cycle + ((full_cycle + (z_wait*60*i))-(z_wait*60))
                     await asyncio.sleep(1)
             else: 
                 ''' calculate remaining time '''
