@@ -1,6 +1,7 @@
 # Irrigation Component V4 <img src="https://github.com/petergridge/irrigation_component_v4/blob/main/icon.png" alt="drawing" width="75"/>
 
-### Latest Changes V4.0.13
+### Latest Changes V4.0.14
+* Bug Fixes
 * Add inter zone delay to provide a delay between zones starting.
 * Add zone grouping to allow groups of zones to run concurrently. 
 * Requires Custom Card version 4.0.12
@@ -247,6 +248,9 @@ irrigationprogram.stop_programs:
 ```
 
 ## REVISION HISTORY
+### 4.0.14
+* Start stop fix.
+* remaining time fix
 ### 4.0.13
 * Group execution fix.
 ### 4.0.12
