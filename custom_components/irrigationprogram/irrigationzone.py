@@ -134,7 +134,10 @@ class irrigationzone:
         return self._flow_sensor
     def flow_sensor_value(self):
         if self._flow_sensor is not None:
-            self._flow_sensor_value = int(float(self.hass.states.get(self._flow_sensor).state))
+            if int(float(self.hass.states.get(self._flow_sensor).state)) != 0:
+                self._flow_sensor_value = int(float(self.hass.states.get(self._flow_sensor).state))
+            else:
+                self._flow_sensor_value = 4 #put saved average flow here
             return self._flow_sensor_value
 
     def water(self):
@@ -211,10 +214,9 @@ class irrigationzone:
         ''' update the run time component '''
         if self._flow_sensor is not None:
             z_water = math.ceil(int(float(self.water_value()) * float(self.water_adjust_value())))
-            self._run_time = z_water  * self.repeat_value()
         else:
             z_water = math.ceil(int(float(self.water_value()) * float(self.water_adjust_value())))
-            self._run_time = (((z_water + self.wait_value()) * self.repeat_value()) - self.wait_value()) * 60
+        self._run_time = (((z_water + self.wait_value()) * self.repeat_value()) - self.wait_value()) * 60
 
         ''' zone has been disabled '''
         if self.disable_zone_value() == True:
@@ -272,7 +274,6 @@ class irrigationzone:
             remaining is volume or time
         '''
 
-        step = 1
         self._stop = False
         z_initial_volume = self.flow_sensor_value()
         z_water = self.water_value()
@@ -282,34 +283,30 @@ class irrigationzone:
         ''' run the watering cycle, water/wait/repeat '''
         SOLENOID = {ATTR_ENTITY_ID: self._switch}
         for i in range(z_repeat, 0, -1):
-            if self._stop == True:
-                break
 
             self._state = 'on'
-            if self.hass.states.is_state(self._switch,'off'):
+            if self.hass.states.is_state(self._switch,'off') and not self._stop:
                 await self.hass.services.async_call(CONST_SWITCH,
                                                     SERVICE_TURN_ON,
                                                     SOLENOID)
 
             if self._flow_sensor is not None:
-                ''' calculate the remaining volume '''
+                ''' estimate the remaining volume and time'''
                 water = z_water
-                while water > 0:
-                    water -= self.flow_sensor_value()/(60/step)
-                    self._remaining_time = water/self.flow_sensor_value()*60
-                    if self._remaining_time < 0:
-                        self._remaining_time = 0
-                    await asyncio.sleep(step)
-                    if self._stop == True:
-                        break                    
+                while water > 0 and not self._stop:
+                    water -= self.flow_sensor_value()/60
+                    remaining_cycle = water/self.flow_sensor_value()*60
+                    full_cycle = z_water/self.flow_sensor_value()*60
+                    self._remaining_time = remaining_cycle + ((full_cycle + (z_wait*60*i))-(z_wait*60)
+                    await asyncio.sleep(1)
             else: 
                 ''' calculate remaining time '''
                 water = z_water * 60
-                for w in range(0,water, step):
-                    self._remaining_time -= step
-                    await asyncio.sleep(step)
-                    if self._stop == True:
+                for w in range(0,water, 1):
+                    self._remaining_time -= 1
+                    if self._stop:
                         break
+                    await asyncio.sleep(1)
 
             if z_wait > 0 and i > 1 and not self._stop:
                 ''' Eco mode is enabled '''
@@ -319,12 +316,11 @@ class irrigationzone:
                                                         SERVICE_TURN_OFF,
                                                         SOLENOID)
                 wait = z_wait * 60
-                for w in range(0,wait, step):
-                    if self._flow_sensor is None:
-                        self._remaining_time -= step
-                    await asyncio.sleep(step)
-                    if self._stop == True:
+                for w in range(0,wait, 1):
+                    self._remaining_time -= 1
+                    if self._stop:
                         break
+                    await asyncio.sleep(1)
 
             ''' turn the switch entity off '''
             if i <= 1 or self._stop:
@@ -335,22 +331,15 @@ class irrigationzone:
                     await self.hass.services.async_call(CONST_SWITCH,
                                                         SERVICE_TURN_OFF,
                                                         SOLENOID)
+                if self._stop:
+                    break
+
         ''' End of repeat loop '''
         self._state = 'off'
  
-        if not self._stop:
-            return True
-        else:
-            return False
-
 
     async def async_turn_off(self, **kwargs):
         self._stop = True
-
-        SOLENOID = {ATTR_ENTITY_ID: self._switch}
-        await self.hass.services.async_call(CONST_SWITCH,
-                                            SERVICE_TURN_OFF,
-                                            SOLENOID)
 
     def set_last_ran(self, p_last_ran):
         if p_last_ran is None:

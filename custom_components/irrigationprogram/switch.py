@@ -4,11 +4,8 @@ from .pump import pumpclass
 import logging
 import asyncio
 import voluptuous as vol
-#import ast
 from datetime import timedelta
-import math
 import homeassistant.util.dt as dt_util
-from homeassistant.util import slugify
 from homeassistant.core import callback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform
@@ -34,7 +31,7 @@ from .const import (
     CONST_SWITCH,
     ATTR_IGNORE_RAIN_SENSOR,
     ATTR_DISABLE_ZONE,
-    ATTR_ENABLE_ZONE, #enable the zone even if raining
+    ATTR_ENABLE_ZONE,
     ATTR_ZONES,
     ATTR_ZONE,
     ATTR_ZONE_GROUP,
@@ -237,8 +234,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
         self._ATTRS = {}
         self._ATTRS [ATTR_LAST_RAN]    = self._last_run
-# Remove total remaining run time
-#        self._ATTRS [ATTR_REMAINING]   = ('%d:%02d:%02d' % (0, 0, 0))
         self._ATTRS [ATTR_START]       = self._start_time
         self._ATTRS [ATTR_HIDE_CONFIG] = self._hide_config
 
@@ -259,7 +254,6 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
 
             self._irrigationzones.append (irrigationzone(self.hass, zone,self._run_freq))
             '''create pump - zone list '''
-#            _LOGGER.error('zone: %s',zone.get(ATTR_ZONE))
             if zone.get(ATTR_PUMP) is not None:
                 if zone.get(ATTR_PUMP) not in pumps:
                     pumps[zone.get(ATTR_PUMP)] = [zone.get(ATTR_ZONE)]
@@ -476,14 +470,12 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             self._ATTRS [zoneremaining] = format_run_time(self._irrigationzones[zn-1].run_time())
                                 
         setattr(self, '_state_attributes', self._ATTRS)
-        self.async_schedule_update_ha_state()
-        self.async_write_ha_state()
 
         zone_groups = groups.values()
         _LOGGER.debug('zone_groups %s', zone_groups)
         self._state   = True
-#        self._name    = self._program_name
-        self.async_schedule_update_ha_state()
+        self._name    = self._program_name
+        self.async_write_ha_state()
 
         '''loop through zone_groups'''
         znd = 0
@@ -499,20 +491,22 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
             loop = asyncio.get_event_loop()
             for zn in group:               
                 loop.create_task(self._irrigationzones[zn-1].async_turn_on())
-            await asyncio.sleep(1)
+            if not self._stop:
+                await asyncio.sleep(1)
 
             '''wait for the zones to complete'''
             zns_running = True
             while zns_running:
                 zns_running = False
+                if self._stop:
+                    break
                 for zn in group:
                     zoneremaining = ('zone%s_remaining' % (zn))
                     self._ATTRS [zoneremaining] = format_run_time(self._irrigationzones[zn-1].remaining_time())
                     '''continue running until all zones have completed'''
-                    if self._irrigationzones[zn-1].state() == "on":
+                    if self._irrigationzones[zn-1].state() != "off": #can be 'on','eco','off'
                         zns_running = True
                 setattr(self, '_state_attributes', self._ATTRS)
-                self.async_schedule_update_ha_state()
                 self.async_write_ha_state()
                 await asyncio.sleep(1)
 
@@ -523,7 +517,7 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 if not self._triggered_manually and not self._stop:
                     self._ATTRS[zonelastran] = p_last_ran
                     self._irrigationzones[zn-1].set_last_ran(p_last_ran)
-                ''' reset the last ran time to 23 hours ago '''
+                ''' reset the last ran time to 23 hours ago - for debug'''
                 if self._reset_last_ran:
                     self._ATTRS[zonelastran] = dt_util.now() - timedelta(hours=23)
                 ''' reset the time remaining to 0 '''
@@ -532,14 +526,10 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
                 setattr(self, '_state_attributes', self._ATTRS)
                 result = self.async_schedule_update_ha_state()
 
-            if self._stop == True:
-                break
-
         setattr(self, '_state_attributes', self._ATTRS)
 
         self._run_zone              = None
         self._state                 = False
-        self._stop                  = False
         self._triggered_manually    = True
 #        self._name                  = self._program_name
 
@@ -548,16 +538,8 @@ class IrrigationProgram(SwitchEntity, RestoreEntity):
     async def async_turn_off(self, **kwargs):
 
         self._stop          = True
-        self._run_zone      = None
 
         zn = 0
         for zone in self._zones:
-
             await self._irrigationzones[zn].async_turn_off()
             zn += 1
-            zoneremaining = ('zone%s_remaining' % (zn))
-            self._ATTRS [zoneremaining] = ('%d:%02d:%02d' % (0, 0, 0))
-            setattr(self, '_state_attributes', self._ATTRS)
-
-        self._state = False
-        self.async_schedule_update_ha_state()
